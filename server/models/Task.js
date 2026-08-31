@@ -1,1 +1,0 @@
-import mongoose from "mongoose";export const taskSchema=new mongoose.Schema({title:{type:String,required:true},type:{type:String,default:"task"},completed:{type:Boolean,default:false}},{_id:true});export default mongoose.models.Task||mongoose.model("Task",taskSchema);

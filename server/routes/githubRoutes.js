@@ -1,1 +1,0 @@
-import {Router} from "express";import {githubToday} from "../services/githubService.js";const router=Router();router.get('/github',async(req,res)=>{try{res.json(await githubToday())}catch(e){res.status(500).json({error:e.message||'Failed to load GitHub activity'})}});export default router;

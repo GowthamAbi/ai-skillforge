@@ -1,1 +1,20 @@
-import {Router} from "express";import dashboardRoutes from "./dashboardRoutes.js";import taskRoutes from "./taskRoutes.js";import githubRoutes from "./githubRoutes.js";import aiRoutes from "./aiRoutes.js";const router=Router();router.use(dashboardRoutes);router.use(taskRoutes);router.use(githubRoutes);router.use(aiRoutes);export default router;
+import {Router} from "express";
+import Day from "../models/Day.js";
+import {githubToday} from "../services/githubService.js";
+import {mentor} from "../services/openaiService.js";
+const router=Router();
+const metrics=(days)=>{
+ const totalTasks=days.reduce((n,d)=>n+d.tasks.length,0); const completedTasks=days.reduce((n,d)=>n+d.tasks.filter(t=>t.completed).length,0);
+ const completedDays=days.filter(d=>d.tasks.length&&d.tasks.every(t=>t.completed)).length;
+ const totalMinutes=days.reduce((n,d)=>n+(d.studyMinutes||0),0);
+ const current=days.find(d=>d.tasks.some(t=>!t.completed))||days.at(-1)||null;
+ return {totalTasks,completedTasks,completedDays,totalMinutes,current,completion:totalTasks?Math.round(completedTasks/totalTasks*100):0};
+};
+router.get('/days',async(req,res)=>res.json(await Day.find().sort({day:1})));
+router.get('/days/:day',async(req,res)=>{const d=await Day.findOne({day:Number(req.params.day)});if(!d)return res.status(404).json({error:'Day not found'});res.json(d)});
+router.get('/dashboard',async(req,res)=>{try{const days=await Day.find().sort({day:1});res.json({days,...metrics(days)});}catch(e){res.status(500).json({error:'Failed to load dashboard'})}});
+router.patch('/days/:day/task/:taskId',async(req,res)=>{try{const d=await Day.findOne({day:Number(req.params.day)});if(!d)return res.status(404).json({error:'Day not found'});const t=d.tasks.id(req.params.taskId);if(!t)return res.status(404).json({error:'Task not found'});t.completed=Boolean(req.body.completed);await d.save();res.json(d)}catch(e){res.status(500).json({error:'Failed to update task'})}});
+router.patch('/days/:day/time',async(req,res)=>{try{const d=await Day.findOneAndUpdate({day:Number(req.params.day)},{$set:{studyMinutes:Math.max(0,Number(req.body.studyMinutes)||0)}},{new:true});if(!d)return res.status(404).json({error:'Day not found'});res.json(d)}catch(e){res.status(500).json({error:'Failed to update study time'})}});
+router.get('/github',async(req,res)=>{try{res.json(await githubToday())}catch(e){res.status(500).json({error:'Failed to load GitHub activity'})}});
+router.post('/days/:day/score',async(req,res)=>{try{const d=await Day.findOne({day:Number(req.params.day)});if(!d)return res.status(404).json({error:'Day not found'});let git={commits:0,repos:[]};try{git=await githubToday()}catch{};const result=await mentor(d,git);d.score=Math.max(0,Math.min(100,Number(result.score)||0));d.feedback=result.feedback||'';await d.save();res.json(d)}catch(e){console.error(e);res.status(500).json({error:e.message||'AI evaluation failed'})}});
+export default router;

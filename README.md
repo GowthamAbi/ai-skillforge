@@ -1,30 +1,12 @@
 # AI SkillForge
-50-day AI Engineering study dashboard: task tracking, study minutes, charts, GitHub activity and OpenAI mentor scoring.
 
-## Requirements
-Node 20+ and MongoDB (local or Atlas).
+50-day AI Engineer study tracker: React + Tailwind + Node/Express + MongoDB + OpenAI + GitHub verification.
 
-## Server
-```bash
-cd server
-npm install
-cp .env.example .env
-# edit .env with your own secrets
-npm run seed
-npm run dev
-```
+## Daily timetable
+9:00 PM–2:00 AM: 15m revision, 105m learning, 10m break, 100m coding, 10m break, 40m project, 20m interview/recap.
 
-## Client
-```bash
-cd client
-npm install
-cp .env.example .env
-npm run dev
-```
-Open http://localhost:5173
+## Setup
+Server: copy `.env.example` to `.env`, fill MongoDB/OpenAI/GitHub values, then `npm install`, `npm run seed`, `npm run dev`.
+Client: `npm install`, `npm run dev`.
 
-## Secrets
-Never put OPENAI_API_KEY or GITHUB_TOKEN in client/.env. Keep them only in server/.env. Never commit server/.env.
-
-## AI mentor
-The server uses the official OpenAI Node SDK and Responses API. Change OPENAI_MODEL in server/.env if desired.
+Re-run `npm run seed` after this update so MongoDB receives the detailed 50-day timetable. Existing study minutes, scores, feedback, and matching task completion are preserved.
