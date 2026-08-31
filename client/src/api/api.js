@@ -1,34 +1,25 @@
-const BASE =
-  import.meta.env.VITE_API_URL ||
-  "http://localhost:5000/api";
+const BASE = import.meta.env.PROD
+  ? "https://ai-skillforge.onrender.com/api"
+  : "http://localhost:5000/api";
 
-export async function api(
-  path,
-  options = {}
-) {
+export async function api(path, options = {}) {
   const url = `${BASE}${path}`;
 
   try {
-    const response = await fetch(
-      url,
-      {
-        ...options,
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...(options.headers || {}),
+      },
+    });
 
-        headers: {
-          "Content-Type":
-            "application/json",
-
-          ...(options.headers || {}),
-        },
-      }
-    );
-
-    let data;
+    let data = null;
 
     try {
       data = await response.json();
     } catch {
-      data = null;
+      // No JSON response
     }
 
     if (!response.ok) {
