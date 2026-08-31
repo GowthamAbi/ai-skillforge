@@ -1,0 +1,1 @@
+export function fallbackScore(day,github){const tasks=day.tasks||[];const done=tasks.filter(t=>t.completed).length;const taskScore=tasks.length?Math.round(done/tasks.length*55):0;const timeScore=Math.min(25,Math.round((day.studyMinutes||0)/300*25));const gitScore=Math.min(20,(github.commits||0)*5);return Math.min(100,taskScore+timeScore+gitScore)}

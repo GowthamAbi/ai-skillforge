@@ -1,0 +1,1 @@
+import mongoose from "mongoose";const schema=new mongoose.Schema({day:{type:Number,required:true},score:{type:Number,min:0,max:100},feedback:String,githubCommits:{type:Number,default:0}},{timestamps:true});export default mongoose.models.Score||mongoose.model("Score",schema);

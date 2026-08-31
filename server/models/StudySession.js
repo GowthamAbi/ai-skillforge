@@ -1,0 +1,1 @@
+import mongoose from "mongoose";const schema=new mongoose.Schema({day:{type:Number,required:true},minutes:{type:Number,default:0},startedAt:Date,endedAt:Date},{timestamps:true});export default mongoose.models.StudySession||mongoose.model("StudySession",schema);
