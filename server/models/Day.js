@@ -1,4 +1,63 @@
-import mongoose from 'mongoose';
-const taskSchema=new mongoose.Schema({title:String,type:{type:String,enum:['learn','code','project','interview']},completed:{type:Boolean,default:false}},{_id:true});
-const schema=new mongoose.Schema({day:{type:Number,unique:true},topic:String,tasks:[taskSchema],studyMinutes:{type:Number,default:0},score:{type:Number,default:0},feedback:{type:String,default:''}},{timestamps:true});
-export default mongoose.model('Day',schema);
+import mongoose from "mongoose";
+
+const taskSchema =
+  new mongoose.Schema({
+    title: {
+      type: String,
+      required: true,
+    },
+
+    completed: {
+      type: Boolean,
+      default: false,
+    },
+  });
+
+const daySchema =
+  new mongoose.Schema(
+    {
+      day: {
+        type: Number,
+        required: true,
+        unique: true,
+      },
+
+      title: {
+        type: String,
+        required: true,
+      },
+
+      topic: {
+        type: String,
+        default: "",
+      },
+
+      tasks: {
+        type: [taskSchema],
+        default: [],
+      },
+
+      studyMinutes: {
+        type: Number,
+        default: 0,
+      },
+
+      score: {
+        type: Number,
+        default: 0,
+      },
+
+      feedback: {
+        type: String,
+        default: "",
+      },
+    },
+    {
+      timestamps: true,
+    }
+  );
+
+export default mongoose.model(
+  "Day",
+  daySchema
+);

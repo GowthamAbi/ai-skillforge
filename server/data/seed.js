@@ -1,35 +1,73 @@
 import "dotenv/config";
 import mongoose from "mongoose";
+
 import Day from "../models/Day.js";
 import { roadmap } from "./roadmap.js";
 
-async function seed() {
+async function seedDatabase() {
   try {
-    console.log("Connecting to MongoDB...");
-
-    await mongoose.connect(process.env.MONGODB_URI);
-
-    console.log("MongoDB connected");
-
-    for (const day of roadmap) {
-      await Day.updateOne(
-        { day: day.day },
-        { $setOnInsert: day },
-        { upsert: true }
+    if (!process.env.MONGODB_URI) {
+      throw new Error(
+        "MONGODB_URI is missing"
       );
     }
 
-    const count = await Day.countDocuments();
+    console.log(
+      "Connecting to MongoDB..."
+    );
 
-    console.log(`50-day roadmap seeded successfully`);
-    console.log(`Total days in database: ${count}`);
+    await mongoose.connect(
+      process.env.MONGODB_URI
+    );
+
+    console.log(
+      "MongoDB connected"
+    );
+
+    console.log(
+      `Roadmap contains ${roadmap.length} days`
+    );
+
+    for (const item of roadmap) {
+      await Day.updateOne(
+        {
+          day: item.day,
+        },
+
+        {
+          $setOnInsert: item,
+        },
+
+        {
+          upsert: true,
+        }
+      );
+    }
+
+    const count =
+      await Day.countDocuments();
+
+    console.log(
+      `Database contains ${count} days`
+    );
+
+    console.log(
+      "Roadmap seeded successfully"
+    );
   } catch (error) {
-    console.error("Seed failed:", error);
+    console.error(
+      "Seed failed:",
+      error
+    );
+
     process.exitCode = 1;
   } finally {
     await mongoose.disconnect();
-    console.log("MongoDB disconnected");
+
+    console.log(
+      "MongoDB disconnected"
+    );
   }
 }
 
-seed();
+seedDatabase();

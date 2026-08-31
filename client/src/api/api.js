@@ -1,20 +1,50 @@
 const BASE =
   import.meta.env.VITE_API_URL ||
-  "https://ai-skillforge.onrender.com/api";
+  "http://localhost:5000/api";
 
-export async function api(path, opts = {}) {
-  const r = await fetch(`${BASE}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-    },
-    ...opts,
-  });
+export async function api(
+  path,
+  options = {}
+) {
+  const url = `${BASE}${path}`;
 
-  const j = await r.json();
+  try {
+    const response = await fetch(
+      url,
+      {
+        ...options,
 
-  if (!r.ok) {
-    throw new Error(j.error || "Request failed");
+        headers: {
+          "Content-Type":
+            "application/json",
+
+          ...(options.headers || {}),
+        },
+      }
+    );
+
+    let data;
+
+    try {
+      data = await response.json();
+    } catch {
+      data = null;
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        data?.error ||
+          `Request failed (${response.status})`
+      );
+    }
+
+    return data;
+  } catch (error) {
+    console.error(
+      `API request failed: ${url}`,
+      error
+    );
+
+    throw error;
   }
-
-  return j;
 }
