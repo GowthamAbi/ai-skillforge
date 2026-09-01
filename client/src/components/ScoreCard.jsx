@@ -1,1 +1,9 @@
-export default function ScoreCard({day}){return <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5"><p className="text-sm text-slate-400">AI mentor score</p><div className="mt-2 text-4xl font-black">{day.score||0}<span className="text-lg text-slate-500">/100</span></div><p className="mt-3 text-sm text-slate-300">{day.feedback||'Complete today’s plan, push code, then evaluate your day.'}</p></div>}
+export default function ScoreCard( {
+  day
+}) {
+  return <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5"><p className="text-sm text-slate-400">AI mentor score</p><div className="mt-2 text-4xl font-black"> {
+    day.score||0
+  }<span className="text-lg text-slate-500">/100</span></div><p className="mt-3 text-sm text-slate-300"> {
+    day.feedback||'Complete today’s plan, push code, then evaluate your day.'
+  }</p></div>
+}

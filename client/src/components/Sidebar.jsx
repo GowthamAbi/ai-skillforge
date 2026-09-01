@@ -1,2 +1,18 @@
-const items=[['dashboard','Dashboard'],['roadmap','50-Day Roadmap'],['tasks',"Today's Timetable"],['github','GitHub'],['analytics','Analytics']];
-export default function Sidebar({page,setPage}){return <aside className="lg:w-64 shrink-0"><div className="lg:sticky lg:top-5 rounded-2xl border border-slate-800 bg-slate-900/80 p-4"><div className="mb-5"><p className="text-xs font-bold tracking-widest text-cyan-400">AI STUDY OS</p><h1 className="text-xl font-bold">SkillForge</h1></div><nav className="grid grid-cols-2 gap-2 sm:grid-cols-5 lg:grid-cols-1">{items.map(([id,label])=><button key={id} onClick={()=>setPage(id)} className={`rounded-xl px-3 py-3 text-left text-sm ${page===id?'bg-cyan-500 text-slate-950 font-bold':'bg-slate-950 text-slate-300 hover:bg-slate-800'}`}>{label}</button>)}</nav></div></aside>}
+const items=[['dashboard','Dashboard'],
+['roadmap','50-Day Roadmap'],['tasks',"Today's Timetable"],
+['github','GitHub'],['analytics','Analytics']];
+export default function Sidebar( {
+  page,setPage
+}) {
+  return <aside className="lg:w-64 shrink-0"><div className="lg:sticky lg:top-5 rounded-2xl border border-slate-800 bg-slate-900/80 p-4"><div className="mb-5"><p className="text-xs font-bold tracking-widest text-cyan-400">AI STUDY OS</p><h1 className="text-xl font-bold">SkillForge</h1></div><nav className="grid grid-cols-2 gap-2 sm:grid-cols-5 lg:grid-cols-1"> {
+    items.map(([id,label])=><button key= {
+      id
+    } onClick= {
+      ()=>setPage(id)
+    } className= {
+      `rounded-xl px-3 py-3 text-left text-sm ${page===id?'bg-cyan-500 text-slate-950 font-bold':'bg-slate-950 text-slate-300 hover:bg-slate-800'}`
+    }> {
+      label
+    }</button>)
+  }</nav></div></aside>
+}

@@ -1,1 +1,11 @@
-export default function AIMentor({busy,onEvaluate}){return <button disabled={busy} onClick={onEvaluate} className="rounded-xl bg-violet-500 px-5 py-3 font-bold disabled:opacity-50">{busy?'Evaluating…':'Evaluate today with AI Mentor'}</button>}
+export default function AIMentor( {
+  busy,onEvaluate
+}) {
+  return <button disabled= {
+    busy
+  } onClick= {
+    onEvaluate
+  } className="rounded-xl bg-violet-500 px-5 py-3 font-bold disabled:opacity-50"> {
+    busy?'Evaluating…':'Evaluate today with AI Mentor'
+  }</button>
+}

@@ -1,1 +1,27 @@
-const groups=[['Foundation',1,10],['RAG',11,17],['Fine-tuning',18,23],['Agents',24,38],['Production',39,45],['Interview',46,50]];export default function SkillProgress({days}){return <div className="space-y-4">{groups.map(([name,a,b])=>{const ds=days.filter(d=>d.day>=a&&d.day<=b);const total=ds.reduce((n,d)=>n+d.tasks.length,0),done=ds.reduce((n,d)=>n+d.tasks.filter(t=>t.completed).length,0),p=total?Math.round(done/total*100):0;return <div key={name}><div className="mb-1 flex justify-between text-sm"><span>{name}</span><span>{p}%</span></div><div className="h-2 rounded bg-slate-800"><div className="h-2 rounded bg-cyan-500" style={{width:`${p}%`}}/></div></div>})}</div>}
+const groups=[['Foundation',1,10],['RAG',
+11,17],['Fine-tuning',18,23],['Agents',24,
+38],['Production',39,45],['Interview',46,
+50]];
+export default function SkillProgress( {
+  days
+}) {
+  return <div className="space-y-4"> {
+    groups.map(([name,a,b])=> {
+      const ds=days.filter(d=>d.day>=a&&d.day<=b);
+      const total=ds.reduce((n,d)=>n+d.tasks.length,
+      0),done=ds.reduce((n,d)=>n+d.tasks.filter(t=>t.completed).length,
+      0),p=total?Math.round(done/total*100):0;
+      return <div key= {
+        name
+      }><div className="mb-1 flex justify-between text-sm"><span> {
+        name
+      }</span><span> {
+        p
+      }%</span></div><div className="h-2 rounded bg-slate-800"><div className="h-2 rounded bg-cyan-500" style= {
+        {
+          width:`${p}%`
+        }
+      }/></div></div>
+    })
+  }</div>
+}

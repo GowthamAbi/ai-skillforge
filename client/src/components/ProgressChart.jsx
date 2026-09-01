@@ -1,1 +1,19 @@
-import {LineChart,Line,XAxis,YAxis,Tooltip,ResponsiveContainer} from 'recharts';export default function ProgressChart({days}){const data=days.map(d=>({day:`D${d.day}`,score:d.score||0,hours:+((d.studyMinutes||0)/60).toFixed(1)}));return <div className="h-72"><ResponsiveContainer width="100%" height="100%"><LineChart data={data}><XAxis dataKey="day"/><YAxis domain={[0,100]}/><Tooltip/><Line type="monotone" dataKey="score" strokeWidth={2} dot={false}/></LineChart></ResponsiveContainer></div>}
+import {
+  LineChart,Line,XAxis,YAxis,Tooltip,ResponsiveContainer
+} from 'recharts';
+export default function ProgressChart( {
+  days
+}) {
+  const data=days.map(d=>( {
+    day:`D${d.day}`,score:d.score||0,hours:+((d.studyMinutes||0)/60).toFixed(1)
+  }));
+  return <div className="h-72"><ResponsiveContainer width="100%" height="100%"><LineChart data= {
+    data
+  }><XAxis dataKey="day"/><YAxis domain= {
+    [0,100]
+  }/><Tooltip/><Line type="monotone" dataKey="score" strokeWidth= {
+    2
+  } dot= {
+    false
+  }/></LineChart></ResponsiveContainer></div>
+}

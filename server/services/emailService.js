@@ -1,3 +1,21 @@
 import nodemailer from "nodemailer";
 let sent="";
-export async function studyAlert(day){const to=process.env.STUDY_EMAIL;if(!to||!process.env.EMAIL_USER||!process.env.EMAIL_PASS)return;const key=new Date().toLocaleDateString("en-CA",{timeZone:"Asia/Kolkata"});if(sent===key)return;const tx=nodemailer.createTransport({service:"gmail",auth:{user:process.env.EMAIL_USER,pass:process.env.EMAIL_PASS}});await tx.sendMail({from:process.env.EMAIL_USER,to,subject:`AI SkillForge — Day ${day.day} starts now`,text:`${day.course}\n${day.topic}\nVideos: ${day.videos.length}\nProject: ${day.project?.title}\nTarget: 280 focused minutes.`});sent=key;}
+export async function studyAlert(day) {
+  const to=process.env.STUDY_EMAIL;
+  if(!to||!process.env.EMAIL_USER||!process.env.EMAIL_PASS)return;
+  const key=new Date().toLocaleDateString("en-CA",
+  {
+    timeZone:"Asia/Kolkata"
+  });
+  if(sent===key)return;
+  const tx=nodemailer.createTransport( {
+    service:"gmail",auth: {
+      user:process.env.EMAIL_USER,pass:process.env.EMAIL_PASS
+    }
+  });
+  await tx.sendMail( {
+    from:process.env.EMAIL_USER,to,subject:`AI SkillForge — Day ${day.day} starts now`,
+    text:`${day.course}\n${day.topic}\nVideos: ${day.videos.length}\nProject: ${day.project?.title}\nTarget: 280 focused minutes.`
+  });
+  sent=key;
+}
