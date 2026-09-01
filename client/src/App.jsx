@@ -39,7 +39,7 @@ export default function App() {
   }<button onClick= {
     load
   } className="ml-3 rounded bg-red-500 px-3 py-2 text-white">Retry</button></div>;
-  if(!data)return <div className="p-10">Loading SkillForge…</div>;
+  if(!data)return <div className="p-10 flex mx-auto justify-center items-center max-w-2xl h-screen">Loading SkillForge…</div>;
   if(!data.current)return <div className="p-10">No roadmap found. Run <code>npm run seed</code> in server.</div>;
   const toggle=async(day,t)=> {
     await api(`/days/${day.day}/task/${t._id}`,
