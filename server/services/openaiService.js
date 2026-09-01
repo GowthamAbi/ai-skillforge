@@ -1,8 +1,4 @@
-import OpenAI from 'openai';
-export async function mentor(day,github){
- if(!process.env.OPENAI_API_KEY) return {score:0,feedback:'Add OPENAI_API_KEY to enable AI mentor scoring.'};
- const client=new OpenAI({apiKey:process.env.OPENAI_API_KEY});
- const prompt=`You are an AI engineering study mentor. Score this day 0-100. Topic: ${day.topic}. Study minutes: ${day.studyMinutes}. Tasks: ${day.tasks.map(t=>`${t.title}:${t.completed}`).join(', ')}. GitHub: ${JSON.stringify(github)}. Return concise JSON with score (number) and feedback (string).`;
- const r=await client.responses.create({model:process.env.OPENAI_MODEL||'gpt-5.6-luna',input:prompt});
- try{return JSON.parse(r.output_text);}catch{return {score:0,feedback:r.output_text};}
-}
+import OpenAI from "openai";
+const client=()=>process.env.OPENAI_API_KEY?new OpenAI({apiKey:process.env.OPENAI_API_KEY}):null;
+export async function mentor(day,github){const c=client();if(!c)return {score:0,feedback:"Add OPENAI_API_KEY to enable AI mentor scoring."};const prompt=`Score this AI study day 0-100 and return JSON {"score":number,"feedback":string}. Course:${day.course}; topic:${day.topic}; minutes:${day.studyMinutes}; tasks:${day.tasks.map(t=>`${t.title}:${t.completed}`).join(',')}; github:${JSON.stringify(github)}`;const r=await c.responses.create({model:process.env.OPENAI_MODEL||"gpt-5.6-mini",input:prompt});try{return JSON.parse(r.output_text)}catch{return {score:0,feedback:r.output_text}}}
+export async function answerDoubt(day,question){const c=client();if(!c)return "Add OPENAI_API_KEY to enable doubt answers.";const r=await c.responses.create({model:process.env.OPENAI_MODEL||"gpt-5.6-mini",input:`You are a practical AI engineering tutor. Course:${day.course}; Topic:${day.topic}. Answer simply with concept, small example, interview point and one check question. Doubt: ${question}`});return r.output_text;}
