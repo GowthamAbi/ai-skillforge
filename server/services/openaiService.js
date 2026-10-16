@@ -9,11 +9,7 @@ export async function mentor(day,github) {
   };
   const r=await c.responses.create( {
     model:process.env.OPENAI_MODEL||"gpt-5.6-mini",
-    input:`Score this study day 0-100. Return JSON {"score":number,"feedback":string}. Topic:${day.topic}; minutes:${day.studyMinutes}; tasks:${day.tasks.map(t=>`$ {
-      t.title
-    }:$ {
-      t.completed
-    }`).join(',')}; github:${JSON.stringify(github)}`
+    input:`Score this study day 0-100. Return JSON {"score":number,"feedback":string}. Topic:${day.topic}; minutes:${day.studyMinutes}; tasks:${day.tasks.map(t=>`${t.title}:${t.completed}`).join(',')}; github:${JSON.stringify(github)}`
   });
   try {
     return JSON.parse(r.output_text)

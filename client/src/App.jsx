@@ -78,7 +78,7 @@ export default function App() {
   let content;
   if(page==='roadmap')content=<Roadmap days= {
     data.days
-  } onSelect= {
+  } schedule={data.schedule} onSelect= {
     openDay
   }/>;
   else if(page==='tasks')content=<Tasks day= {

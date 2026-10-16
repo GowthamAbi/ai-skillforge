@@ -2,6 +2,9 @@ import {
   Router
 } from "express";
 import Day from "../models/Day.js";
+import StudyPlan from "../models/StudyPlan.js";
+import studyPlanRouter from "./studyPlan.js";
+import { getStudySchedule } from "../utils/studySchedule.js";
 import Doubt from "../models/Doubt.js";
 import {
   githubToday
@@ -10,12 +13,13 @@ import {
   mentor,answerDoubt,reviewProject
 } from "../services/openaiService.js";
 const router=Router();
+router.use('/study-plan', studyPlanRouter);
 const stats=days=> {
   const total=days.reduce((n,d)=>n+d.tasks.length,
   0),done=days.reduce((n,d)=>n+d.tasks.filter(t=>t.completed).length,
   0),completedDays=days.filter(d=>d.tasks.length&&d.tasks.every(t=>t.completed)).length,
   totalMinutes=days.reduce((n,d)=>n+(d.studyMinutes||0),
-  0),current=days.find(d=>d.tasks.some(t=>!t.completed))||days.at(-1)||null;
+  0),current=days.find(d=>!d.daySubmitted)||days.at(-1)||null;
   let streak=0;
   for(const d of days) {
     if(d.tasks.length&&d.tasks.every(t=>t.completed))streak++;
@@ -47,9 +51,8 @@ router.get('/dashboard',async(req,res)=> {
     const days=await Day.find().sort( {
       day:1
     });
-    res.json( {
-      days,...stats(days)
-    })
+    const plan=await StudyPlan.findOne({key:'default'}).lean();
+    res.json({days,...stats(days),schedule:getStudySchedule(plan?.startDate,plan?.pausedDates||[])});
   }catch {
     res.status(500).json( {
       error:'Failed to load dashboard'
