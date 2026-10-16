@@ -1,5 +1,6 @@
 import StatCard from '../components/StatCard';
 import StudyPlanner from '../components/StudyPlanner';
+import NotificationSettings from '../components/NotificationSettings';
 import LearningPanel from '../components/LearningPanel';
 import DailyTasks from '../components/DailyTasks';
 import StudyTimer from '../components/StudyTimer';
@@ -21,7 +22,7 @@ export default function Dashboard( {
   const d=data.current;
   const done=d.tasks.filter(t=>t.completed).length;
   const dayPct=Math.round(done/d.tasks.length*100);
-  return <div><StudyPlanner schedule={data.schedule} onChange={reload}/><div className="mb-6 flex flex-wrap items-end justify-between gap-3"><div><p className="text-sm font-bold text-cyan-400">TODAY · DAY {
+  return <div><StudyPlanner schedule={data.schedule} onChange={reload}/><NotificationSettings/><div className="mb-6 flex flex-wrap items-end justify-between gap-3"><div><p className="text-sm font-bold text-cyan-400">TODAY · DAY {
     d.day
   }/50</p><h2 className="text-3xl font-black"> {
     d.topic
@@ -51,4 +52,4 @@ export default function Dashboard( {
     d
   } onSave= {
     onSaveTime
-  }/></div></Box><div className="space-y-4"><Box><p className="text-xs font-bold text-cyan-400">TODAY'S PROJECT</p><h3 className="mt-2 text-lg font-bold">{typeof d.project==='string'?d.project:d.project?.title||'No project'}</h3><p className="mt-2 text-sm text-slate-400">Project block: 1:00–1:40 AM. Push meaningful work to GitHub.</p></Box><ScoreCard day={d}/><Box><AIMentor busy={busy} onEvaluate={onScore}/></Box></div></div><div className="mt-4 grid gap-4 xl:grid-cols-2"><Box><h3 className="mb-4 text-xl font-bold">Score tracking</h3><ProgressChart days={data.days}/></Box><Box><h3 className="mb-5 text-xl font-bold">Skill progress</h3><SkillProgress days={data.days}/></Box></div><div className="mt-4"><LearningPanel day={d} reload={reload}/></div></div>}
+  }/></div></Box><div className="space-y-4"><Box><p className="text-xs font-bold text-cyan-400">TODAY'S PROJECT</p><h3 className="mt-2 text-lg font-bold">{typeof d.project==='string'?d.project:d.project?.title||'No project'}</h3><p className="mt-2 text-sm text-slate-400">Project block: 1:00–1:40 AM. Push meaningful work to GitHub.</p></Box><ScoreCard day={d}/><Box><p className="mb-2 text-xs text-slate-400">{data.capabilities?.openaiConfigured ? 'OpenAI key present — credits not verified' : 'No paid API needed: offline progress score available'}</p><AIMentor busy={busy} onEvaluate={onScore} offline={!data.capabilities?.openaiConfigured}/></Box></div></div><div className="mt-4 grid gap-4 xl:grid-cols-2"><Box><h3 className="mb-4 text-xl font-bold">Score tracking</h3><ProgressChart days={data.days}/></Box><Box><h3 className="mb-5 text-xl font-bold">Skill progress</h3><SkillProgress days={data.days}/></Box></div><div className="mt-4"><LearningPanel day={d} reload={reload} capabilities={data.capabilities}/></div></div>}
