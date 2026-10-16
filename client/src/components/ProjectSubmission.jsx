@@ -93,6 +93,6 @@ export default function ProjectSubmission( {
       p.attempts.length
     } · Pass mark: 70</p></div>
   } {
-    p.status==='passed'&&<p className="mt-4 font-bold text-emerald-400">Passed ✓ Next day unlocked.</p>
+    p.status==='passed'&&<p className="mt-4 font-bold text-emerald-400">Passed ✓ Submit Day to unlock the next day.</p>
   }</section>
 }
