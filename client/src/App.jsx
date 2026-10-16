@@ -19,7 +19,10 @@ export default function App() {
     try {
       setError('');
       const d=await api('/dashboard');
-      setData(d);
+      let capabilities;
+      try { capabilities=await api('/capabilities'); }
+      catch { capabilities={openaiConfigured:false,projectSelfReviewAvailable:false,totalStudyDays:d.days?.length||0}; }
+      setData({...d,capabilities});
       try {
         setGit(await api('/github'))
       }catch {
