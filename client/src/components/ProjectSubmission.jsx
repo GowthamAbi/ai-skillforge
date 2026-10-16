@@ -1,15 +1,22 @@
 import {
-  useState
+  useState,useEffect
 } from 'react';
 import {
   api
 } from '../api/api';
 export default function ProjectSubmission( {
-  day,reload
+  day,reload,capabilities
 }) {
   const [code,setCode]=useState(day.project?.submission||''),
   [name,setName]=useState(day.project?.filename||''),
-  [busy,setBusy]=useState(false),[err,setErr]=useState('');
+  [busy,setBusy]=useState(false),[err,setErr]=useState(''),
+  [checks,setChecks]=useState([]);
+  useEffect(()=>{
+    setCode(day.project?.submission||'');
+    setName(day.project?.filename||'');
+    setChecks([]);
+    setErr('');
+  },[day.day]);
   const upload=e=> {
     const f=e.target.files?.[0];
     if(!f)return;
@@ -41,6 +48,19 @@ export default function ProjectSubmission( {
       setBusy(false)
     }
   };
+  const submitSelfReview=async()=>{
+    setBusy(true);
+    setErr('');
+    try{
+      await api(`/days/${day.day}/project/self-review`,{
+        method:'POST',body:JSON.stringify({
+          code,filename:name||'pasted-code',confirmations:checks
+        })
+      });
+      await reload();
+    }catch(e){setErr(e.message);}
+    finally{setBusy(false);}
+  };
   const p=day.project|| {
   };
   return <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5"><div className="flex flex-wrap justify-between gap-2"><div><p className="text-xs font-bold text-violet-300">PROJECT TASK · DAY {
@@ -48,7 +68,7 @@ export default function ProjectSubmission( {
   }</p><h3 className="mt-1 text-xl font-bold"> {
     p.title||'Project'
   }</h3></div><b className= {
-    p.status==='passed'?'text-emerald-400':p.status==='failed'?'text-red-400':'text-amber-300'
+    ['passed','self-reviewed'].includes(p.status)?'text-emerald-400':p.status==='failed'?'text-red-400':'text-amber-300'
   }> {
     (p.status||'not-started').toUpperCase()
   }</b></div><div className="mt-3 text-sm text-slate-300"> {
@@ -65,12 +85,14 @@ export default function ProjectSubmission( {
   } onChange= {
     e=>setCode(e.target.value)
   } placeholder="Paste your project code here..." className="mt-3 min-h-56 w-full rounded-xl border border-slate-700 bg-slate-950 p-3 font-mono text-sm"/><button disabled= {
-    busy||!code.trim()
+    busy||!code.trim()||!capabilities?.openaiConfigured
   } onClick= {
     submit
   } className="mt-3 rounded-xl bg-violet-500 px-4 py-2 font-bold disabled:opacity-50"> {
     busy?'AI reviewing…':p.status==='failed'?'Upload correction & recheck':'Submit for AI review'
   }</button> {
+    !capabilities?.openaiConfigured&&<p className="mt-3 text-sm text-amber-300">OpenAI API is not configured. You can complete the project with the free self-check below. Self-check is not AI verification.</p>
+  }<div className="mt-4 rounded-xl border border-slate-700 bg-slate-950/70 p-4"><h4 className="font-bold">Free offline project self-check</h4><p className="mt-1 text-xs text-slate-400">Run and test your code first. Then confirm each requirement yourself. This is not graded by AI.</p><div className="mt-3 space-y-2">{(p.requirements||[]).map((requirement,i)=><label key={i} className="flex items-start gap-2 text-sm"><input type="checkbox" checked={checks[i]||false} onChange={e=>setChecks(previous=>(p.requirements||[]).map((_,index)=>index===i?e.target.checked:!!previous[index]))} className="mt-1"/><span>{requirement}</span></label>)}</div><button type="button" disabled={busy||code.trim().length<20||checks.length!==(p.requirements||[]).length||!checks.every(Boolean)} onClick={submitSelfReview} className="mt-3 rounded-xl border border-emerald-500 px-4 py-2 font-bold text-emerald-300 disabled:opacity-40">{busy?'Saving…':'Save self-check & continue'}</button></div> {
     err&&<p className="mt-3 text-sm text-red-400"> {
       err
     }</p>
@@ -93,6 +115,6 @@ export default function ProjectSubmission( {
       p.attempts.length
     } · Pass mark: 70</p></div>
   } {
-    p.status==='passed'&&<p className="mt-4 font-bold text-emerald-400">Passed ✓ Submit Day to unlock the next day.</p>
+    ['passed','self-reviewed'].includes(p.status)&&<p className="mt-4 font-bold text-emerald-400">{p.status==='passed'?'AI review passed':'Self-check complete (not AI verified)'} ✓ Submit Day to unlock the next day.</p>
   }</section>
 }
