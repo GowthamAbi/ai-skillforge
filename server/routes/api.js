@@ -132,19 +132,15 @@ res)=> {
     score,total:d.mcqs.length,wrong,attempts:d.quizAttempts
   })
 });
-router.patch('/days/:day/project',async(req,
-res)=> {
-  const d=await Day.findOneAndUpdate( {
-    day:+req.params.day
-  }, {
-    $set: {
-      'project.status':req.body.status||'not-started',
-      'project.githubUrl':req.body.githubUrl||''
-    }
-  }, {
-    new:true
-  });
-  res.json(d)
+router.patch('/days/:day/project',async(req,res)=> {
+  // Status is controlled only by the AI review or explicit self-check route.
+  // Clients must never be able to mark their own project as passed directly.
+  const d=await Day.findOneAndUpdate(
+    { day:+req.params.day },
+    { $set: { 'project.githubUrl':String(req.body?.githubUrl||'').slice(0,500) } },
+    { new:true }
+  );
+  return d?res.json(d):res.status(404).json({error:'Day not found'});
 });
 router.post('/days/:day/project/self-review', async(req,res)=>{
   const n=+req.params.day;
@@ -261,6 +257,8 @@ res)=> {
   if(!d)return res.status(404).json( {
     error:'Day not found'
   });
+  const laterSubmitted=await Day.exists({day:{$gt:d.day},daySubmitted:true});
+  if(laterSubmitted)return res.status(409).json({error:'Reset later submitted days before resetting an earlier day.'});
   d.videos.forEach(v=>v.completed=false);
   d.tasks.forEach(t=>t.completed=false);
   d.quizAttempts=[];
@@ -315,6 +313,7 @@ res)=> {
     const d=await Day.findOne( {
       day:+req.params.day
     });
+    if(!d)return res.status(404).json({error:'Day not found'});
     if(!process.env.OPENAI_API_KEY?.trim()){
       const taskPercent=d.tasks.length?d.tasks.filter(t=>t.completed).length/d.tasks.length:0;
       const videoPercent=d.videos.length?d.videos.filter(v=>v.completed).length/d.videos.length:0;
