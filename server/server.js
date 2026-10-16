@@ -3,10 +3,8 @@ import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
 import api from "./routes/api.js";
-import Day from "./models/Day.js";
-import {
-  studyAlert
-} from "./services/emailService.js";
+import { ensureRoadmap } from "./services/ensureRoadmap.js";
+import { startReminderScheduler } from "./services/notifications.js";
 const app=express();
 const PORT=process.env.PORT||5000;
 // CORS
@@ -40,21 +38,10 @@ async function startServer() {
       dbName:process.env.MONGODB_DB||"aitraning"
     });
     console.log("MongoDB connected:",mongoose.connection.name);
+    const seeded = await ensureRoadmap();
+    console.log("Study roadmap ready:", seeded.total, "days; added:", seeded.added);
     app.listen(PORT,()=>console.log(`Server running on port ${PORT}`));
-    setInterval(async()=> {
-      const now=new Date().toLocaleString("en-US",
-      {
-        timeZone:"Asia/Kolkata",hour12:false,hour:"2-digit",
-        minute:"2-digit"
-      });
-      if(now==="21:00") {
-        const days=await Day.find().sort( {
-          day:1
-        });
-        const current=days.find(d=>d.tasks.some(t=>!t.completed))||days.at(-1);
-        if(current)await studyAlert(current)
-      }
-    },60000)
+    startReminderScheduler();
   }catch(e) {
     console.error("Server startup failed:",
     e);
