@@ -4,6 +4,7 @@ import {
 import Day from "../models/Day.js";
 import StudyPlan from "../models/StudyPlan.js";
 import studyPlanRouter from "./studyPlan.js";
+import notificationRouter from "./notifications.js";
 import { getStudySchedule } from "../utils/studySchedule.js";
 import Doubt from "../models/Doubt.js";
 import {
@@ -14,6 +15,18 @@ import {
 } from "../services/openaiService.js";
 const router=Router();
 router.use('/study-plan', studyPlanRouter);
+router.use('/notifications',notificationRouter);
+router.get('/capabilities',async(req,res)=>{
+  try{
+    res.json({
+      openaiConfigured:Boolean(process.env.OPENAI_API_KEY?.trim()),
+      note:'Configured means a key is present, not that it has credits.',
+      projectSelfReviewAvailable:true,
+      totalStudyDays:await Day.countDocuments(),
+      githubConfigured:Boolean(process.env.GITHUB_USERNAME)
+    });
+  }catch{res.status(500).json({error:'Could not check capabilities'});}
+});
 const stats=days=> {
   const total=days.reduce((n,d)=>n+d.tasks.length,
   0),done=days.reduce((n,d)=>n+d.tasks.filter(t=>t.completed).length,
@@ -119,19 +132,39 @@ res)=> {
     score,total:d.mcqs.length,wrong,attempts:d.quizAttempts
   })
 });
-router.patch('/days/:day/project',async(req,
-res)=> {
-  const d=await Day.findOneAndUpdate( {
-    day:+req.params.day
-  }, {
-    $set: {
-      'project.status':req.body.status||'not-started',
-      'project.githubUrl':req.body.githubUrl||''
-    }
-  }, {
-    new:true
-  });
-  res.json(d)
+router.patch('/days/:day/project',async(req,res)=> {
+  // Status is controlled only by the AI review or explicit self-check route.
+  // Clients must never be able to mark their own project as passed directly.
+  const d=await Day.findOneAndUpdate(
+    { day:+req.params.day },
+    { $set: { 'project.githubUrl':String(req.body?.githubUrl||'').slice(0,500) } },
+    { new:true }
+  );
+  return d?res.json(d):res.status(404).json({error:'Day not found'});
+});
+router.post('/days/:day/project/self-review', async(req,res)=>{
+  const n=+req.params.day;
+  const d=await Day.findOne({day:n});
+  if(!d)return res.status(404).json({error:'Day not found'});
+  if(n>1){
+    const prev=await Day.findOne({day:n-1});
+    if(!prev?.daySubmitted)return res.status(403).json({error:'Submit previous day first'});
+  }
+  const code=String(req.body?.code||'').trim();
+  const filename=String(req.body?.filename||'pasted-code').slice(0,200);
+  const confirmations=req.body?.confirmations;
+  const requirements=d.project?.requirements||[];
+  if(code.length<20||code.length>30000)return res.status(400).json({error:'Submit your main project code (20–30000 characters)'});
+  if(!Array.isArray(confirmations)||confirmations.length!==requirements.length||!confirmations.every(x=>x===true)){
+    return res.status(400).json({error:'Confirm each project requirement after testing your code'});
+  }
+  d.project.submission=code;
+  d.project.filename=filename;
+  d.project.status='self-reviewed';
+  d.project.feedback='Self-reviewed by learner. No AI verification or automated code tests were performed.';
+  d.project.score=0;
+  await d.save();
+  res.json({message:'Self-check saved. Finish other requirements and submit your day.',project:d.project});
 });
 router.post('/days/:day/project/submit',
 async(req,res)=> {
@@ -151,6 +184,7 @@ async(req,res)=> {
       })
     }const code=String(req.body.code||'').trim(),
     filename=String(req.body.filename||'pasted-code');
+    if(!process.env.OPENAI_API_KEY?.trim())return res.status(503).json({error:'AI review needs a configured API key with credits. Use offline self-check instead.'});
     if(!code)return res.status(400).json( {
       error:'Paste or upload your project code first'
     });
@@ -198,12 +232,12 @@ res)=> {
   }const videosDone=d.videos.every(v=>v.completed),
   tasksDone=d.tasks.every(t=>t.completed),
   best=d.quizAttempts.length?Math.max(...d.quizAttempts.map(a=>a.total?Math.round(a.score/a.total*100):0)):0,
-  mcqPassed=d.mcqs.length===0||best>=70,projectPassed=d.project?.status==='passed';
+  mcqPassed=d.mcqs.length===0||best>=70,projectPassed=['passed','self-reviewed'].includes(d.project?.status);
   const pending=[];
   if(!videosDone)pending.push('Complete all course videos');
   if(!tasksDone)pending.push('Complete all daily tasks');
   if(!mcqPassed)pending.push('Pass MCQ with at least 70%');
-  if(!projectPassed)pending.push('Pass AI project review');
+  if(!projectPassed)pending.push('Pass AI project review or finish offline self-check');
   if(pending.length)return res.status(400).json( {
     error:'Day is not ready to submit',pending
   });
@@ -223,6 +257,8 @@ res)=> {
   if(!d)return res.status(404).json( {
     error:'Day not found'
   });
+  const laterSubmitted=await Day.exists({day:{$gt:d.day},daySubmitted:true});
+  if(laterSubmitted)return res.status(409).json({error:'Reset later submitted days before resetting an earlier day.'});
   d.videos.forEach(v=>v.completed=false);
   d.tasks.forEach(t=>t.completed=false);
   d.quizAttempts=[];
@@ -277,6 +313,17 @@ res)=> {
     const d=await Day.findOne( {
       day:+req.params.day
     });
+    if(!d)return res.status(404).json({error:'Day not found'});
+    if(!process.env.OPENAI_API_KEY?.trim()){
+      const taskPercent=d.tasks.length?d.tasks.filter(t=>t.completed).length/d.tasks.length:0;
+      const videoPercent=d.videos.length?d.videos.filter(v=>v.completed).length/d.videos.length:0;
+      const quizBest=d.quizAttempts.length?Math.max(...d.quizAttempts.map(a=>a.total?a.score/a.total:0)):0;
+      const minutes=Math.max(0,Math.min(1,(d.studyMinutes||0)/(d.targetMinutes||280)));
+      d.score=Math.round(taskPercent*50+videoPercent*20+quizBest*20+minutes*10);
+      d.feedback='Offline activity score only (tasks, videos, quiz, study time). Not an AI evaluation.';
+      await d.save();
+      return res.json(d);
+    }
     let git= {
       commits:0
     };

@@ -1,0 +1,29 @@
+name: SkillForge checks
+on:
+  push:
+    branches: [main, feature/offline-study-reminders-20261016]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test server (no MongoDB or paid AI required)
+        working-directory: server
+        run: |
+          npm install --no-audit --no-fund
+          node --test tests/*.test.js
+          node --check server.js
+          node --check routes/api.js
+          node --check routes/studyPlan.js
+          node --check routes/notifications.js
+          node --check services/notifications.js
+      - name: Build frontend
+        working-directory: client
+        run: |
+          npm install --no-audit --no-fund
+          npm run build

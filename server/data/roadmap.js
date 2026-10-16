@@ -35,7 +35,7 @@ const makeDay=(day,course,topic,videos,project)=>( {
   })),mcqs:mcqs(topic),quizAttempts:[],tasks:[task("09:00 PM",
   "09:15 PM",15,"revision","Revision / Plan",
   `Revise and plan ${topic}`),task("09:15 PM",
-  "10:15 PM",60,"video","Course Videos",`Watch assigned videos: ${topic}`),
+  "10:15 PM",60,videos.length?"video":"practice",videos.length?"Course Videos":"Capstone / Revision",videos.length?`Watch assigned videos: ${topic}`:`Practice and build for ${topic}`),
   task("10:15 PM","11:00 PM",45,"notes","Notes + Practice",
   `Write notes and reproduce examples for ${topic}`),
   task("11:10 PM","12:10 AM",60,"code","Coding Practice",

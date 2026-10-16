@@ -6,7 +6,7 @@ import {
 } from '../api/api';
 import ProjectSubmission from './ProjectSubmission';
 export default function LearningPanel( {
-  day,reload
+  day,reload,capabilities
 }) {
   const [dayMsg,setDayMsg]=useState(''),[answers,
   setAnswers]=useState([]),[result,setResult]=useState(null),
@@ -69,7 +69,7 @@ export default function LearningPanel( {
     day
   } reload= {
     reload
-  }/><section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5"><p className="text-xs font-bold text-cyan-400"> {
+  } capabilities={capabilities}/><section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5"><p className="text-xs font-bold text-cyan-400"> {
     day.course
   }</p><h3 className="mt-1 text-xl font-bold">Course videos</h3><div className="mt-3 space-y-2"> {
     day.videos.map(v=><label key= {
@@ -144,7 +144,7 @@ export default function LearningPanel( {
   }</section><section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5"><h3 className="text-xl font-bold">Finish Day {
     day.day
   }</h3><p className="mt-2 text-sm text-slate-400">Complete all videos,
-   tasks, MCQ (70%+), and pass the project AI review. Only Submit Day unlocks the next day.</p><div className="mt-4 flex flex-wrap gap-3"><button onClick= {
+   tasks, MCQ (70%+), and pass the project AI review or complete the clearly labelled offline self-check. Only Submit Day unlocks the next day.</p><div className="mt-4 flex flex-wrap gap-3"><button onClick= {
     resetDay
   } className="rounded-xl border border-rose-700 px-4 py-2 font-bold text-rose-300">Reset Day</button><button onClick= {
     submitDay
