@@ -1,6 +1,6 @@
 const title=p=>typeof p==='string'?p:p?.title||'No project';
 export default function Roadmap( {
-  days,onSelect
+  days,onSelect,schedule
 }) {
   return <div><div className="mb-6"><p className="text-sm font-bold text-cyan-400">50-DAY ROADMAP</p><h2 className="text-3xl font-black">Learn → Build → Pass → Unlock</h2><p className="mt-2 text-slate-400">Complete everything → Submit Day → Unlock Next Day.</p></div><div className="grid gap-3"> {
     (days||[]).map((d,i)=> {
@@ -19,7 +19,7 @@ export default function Roadmap( {
         d.day
       } · {
         locked?'🔒 LOCKED':'🔓 OPEN'
-      }</span><p className="mt-1 text-xs font-bold text-emerald-400"> {
+      }</span><p className="mt-1 text-xs text-slate-400">{schedule?.scheduleDates?.[d.day-1] ? `Scheduled: ${schedule.scheduleDates[d.day-1]}` : 'Choose a start date on Dashboard'}</p><p className="mt-1 text-xs font-bold text-emerald-400"> {
         d.course
       }</p><h3 className="text-lg font-bold"> {
         d.topic
