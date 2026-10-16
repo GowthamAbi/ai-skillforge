@@ -1,4 +1,5 @@
 import StatCard from '../components/StatCard';
+import StudyPlanner from '../components/StudyPlanner';
 import LearningPanel from '../components/LearningPanel';
 import DailyTasks from '../components/DailyTasks';
 import StudyTimer from '../components/StudyTimer';
@@ -20,7 +21,7 @@ export default function Dashboard( {
   const d=data.current;
   const done=d.tasks.filter(t=>t.completed).length;
   const dayPct=Math.round(done/d.tasks.length*100);
-  return <div><div className="mb-6 flex flex-wrap items-end justify-between gap-3"><div><p className="text-sm font-bold text-cyan-400">TODAY · DAY {
+  return <div><StudyPlanner schedule={data.schedule} onChange={reload}/><div className="mb-6 flex flex-wrap items-end justify-between gap-3"><div><p className="text-sm font-bold text-cyan-400">TODAY · DAY {
     d.day
   }/50</p><h2 className="text-3xl font-black"> {
     d.topic
