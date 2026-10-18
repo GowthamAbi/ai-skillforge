@@ -7,12 +7,13 @@ import {
 } from 'lucide-react';
 import { api } from '../api/api';
 import NotificationSettings from '../components/NotificationSettings';
+import RankCards from '../components/RankCards';
 
 const nav = [
   ['dashboard', 'Dashboard', Activity], ['courses', 'Udemy Courses', BookOpen],
   ['lessons', 'Daily Lessons', Play], ['quizzes', 'Quizzes & Tests', ListChecks],
   ['projects', 'Coding Projects', Code2], ['career', 'Job Preparation', BriefcaseBusiness],
-  ['progress', 'Progress', Trophy], ['alerts', 'Brave Alerts', Bell]
+  ['progress', 'Progress', Trophy], ['rankcards', 'Rank Cards', GraduationCap], ['alerts', 'Brave Alerts', Bell]
 ];
 const asTime = minutes => `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
 const fmt = date => new Date(`${date}T12:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', weekday: 'short' });
@@ -76,6 +77,7 @@ function QuizBox({ lesson, onChanged }) {
   const [answers, setAnswers] = useState({});
   const [result, setResult] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [latestEmailStatus, setLatestEmailStatus] = useState(null);
   const [error, setError] = useState('');
   useEffect(() => {
     setQuiz(null); setResult(null); setAnswers({}); setError('');
@@ -219,7 +221,12 @@ export default function EngineerPath() {
   const chooseQuiz = lesson => { setQuizLessonId(lesson.id); setSection('quizzes'); window.scrollTo({top:0,behavior:'smooth'}); };
   const completeDay = async () => {
     setBusy(true); setStatus('');
-    try { const result = await api(`/path/days/${day.day}/complete`, { method:'POST' }); setStatus(result.message); await load(); setSelectedDay(result.nextDay); }
+    try {
+      const result = await api(`/path/days/${day.day}/complete`, { method:'POST' });
+      setStatus(result.message); setLatestEmailStatus(result.emailStatus);
+      await load(); setSelectedDay(result.nextDay); setSection('rankcards');
+      window.scrollTo({top:0,behavior:'smooth'});
+    }
     catch(error) { setStatus(error.pending?.join(', ') || error.message); }
     finally { setBusy(false); }
   };
@@ -266,6 +273,7 @@ export default function EngineerPath() {
           {section==='projects' && <div className="grid gap-4 lg:grid-cols-2">{data.modules.map(item=><div key={item.id} className="space-y-4"><ProjectForm module={item} currentDay={data.firstUnfinishedDay} onChanged={load}/><ModuleFinalTest module={item} currentDay={data.firstUnfinishedDay} onChanged={load}/></div>)}</div>}
           {section==='career' && <div className="grid gap-4 lg:grid-cols-2"><Panel className="p-6"><BriefcaseBusiness className="text-indigo-600" size={34}/><h3 className="mt-4 text-xl font-extrabold">AI Engineer job-readiness</h3><p className="mt-2 text-sm leading-6 text-slate-600">Spend 20 minutes per study day preparing your GitHub, resume, architecture explanations and interview answers.</p><div className="mt-5 space-y-3">{['Write a 2-minute walkthrough of today’s concept','Commit code with a useful README and setup instructions','Explain one trade-off, failure case and test','Prepare Python, SQL, ML, RAG and agent interview examples'].map((x,i)=><div key={x} className="flex items-center gap-3 text-sm text-slate-600"><span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-700">{i+1}</span>{x}</div>)}</div></Panel><Panel className="p-6"><Rocket size={34} className="text-emerald-600"/><h3 className="mt-4 text-xl font-extrabold">Portfolio finish line</h3><p className="mt-2 text-sm leading-6 text-slate-600">Days 48–50: integrate a capstone, add tests and deployment, publish a demo video, then complete a mock technical interview.</p><button onClick={()=>chooseDay(48)} className="mt-5 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white">View capstone days <ArrowRight size={16}/></button></Panel></div>}
           {section==='progress' && <div className="grid gap-4 lg:grid-cols-2"><Panel className="p-6"><h3 className="text-xl font-extrabold">Journey progress</h3><p className="mt-4 text-4xl font-black text-indigo-700">{Math.round(data.stats.completedDays/data.totalDays*100)}%</p><p className="mt-1 text-sm text-slate-500">{data.stats.completedDays} of {data.totalDays} study days finished</p><div className="mt-4 h-3 rounded-full bg-indigo-100"><div className="h-3 rounded-full bg-indigo-600" style={{width:`${data.stats.completedDays/data.totalDays*100}%`}}/></div><div className="mt-6 grid grid-cols-2 gap-4"><div><p className="text-2xl font-extrabold">{data.stats.streak}</p><p className="text-xs text-slate-500">Consecutive calendar days</p></div><div><p className="text-2xl font-extrabold">{data.stats.consistencyRate}%</p><p className="text-xs text-slate-500">Scheduled-day completion rate</p></div></div></Panel><Panel className="p-6"><h3 className="text-xl font-extrabold">Video mastery</h3><p className="mt-2 text-sm text-slate-500">Videos watched and their checkpoint tests</p><div className="mt-5 space-y-5">{data.courses.map(course=>{const selected=allVideos.filter(v=>v.courseId===course.id);const passed=selected.filter(v=>v.quizPassed).length;return <div key={course.id}><div className="flex items-center justify-between gap-3 text-xs"><span className="font-bold">{course.title}</span><span className="shrink-0 text-slate-500">{passed}/{selected.length}</span></div><div className="mt-2 h-2 rounded-full bg-slate-100"><div className="h-full rounded-full bg-emerald-500" style={{width:`${selected.length?passed/selected.length*100:0}%`}}/></div></div>})}</div></Panel></div>}
+          {section==='rankcards' && <RankCards latestEmailStatus={latestEmailStatus}/>}
           {section==='alerts' && <div className="grid gap-4 lg:grid-cols-2"><Panel className="p-6"><Bell size={32} className="text-indigo-600"/><h3 className="mt-4 text-xl font-extrabold">Study reminders at 9:00 PM IST</h3><p className="mt-2 text-sm leading-6 text-slate-600">Your alert time is 9 PM. Your study start is flexible: start, pause or resume the focus timer whenever you want. Brave needs HTTPS, notification permission, a service worker and configured server push keys.</p><div className="mt-4 rounded-xl bg-amber-50 p-3 text-xs leading-5 text-amber-800">Browser notifications may be delayed or blocked by device settings or a sleeping free-tier server. Enabling a reminder does not guarantee delivery.</div></Panel><div className="rounded-xl bg-[#0e172e] text-white"><NotificationSettings mode="path"/></div></div>}
         </>}
       </div>

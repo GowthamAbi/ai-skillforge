@@ -103,5 +103,32 @@ push when the tab/phone is locked:
 The existing app has no login/authentication; add authenticated subscriptions
 and per-user data isolation before opening it to multiple public users.
 
+### New AI Engineer Path daily rank cards
+
+After **Submit day & unlock next 4 hours** passes its checks, SkillForge
+generates a celebratory daily **Rank Card** from tracked study minutes, watched
+videos and actual quiz scores. It records earned XP, the rank, completed video
+titles, badges and the completion-date streak. Go to **Rank Cards** in the new
+sidebar to reopen any past card and **Download PNG** or **Share card** from
+supported browsers. On browsers without native file sharing, Share downloads
+the PNG so the learner can attach it to WhatsApp or other apps manually.
+
+The backend also sends a styled HTML rank-card email **immediately when a day
+is completed** (regardless of time of day) using the existing Gmail SMTP
+configuration. Set these on the **new AI Engineer Path Render service**:
+
+| Render environment variable | Purpose |
+| --- | --- |
+| `STUDY_EMAIL` | Verified recipient address for the report |
+| `EMAIL_USER` | Sending Gmail address |
+| `EMAIL_PASS` | Gmail app password, configured privately in Render |
+
+Never commit or share the Gmail password. If any value is missing or Gmail
+delivery fails, finishing the day still works and the PNG remains available
+in Rank Cards; the UI reports whether the email was configured or sent.
+No paid AI or quiz API is involved. A day that was not submitted is **not**
+emailed automatically; a calendar-time daily digest needs an additional
+reliable scheduled worker and recipient preference.
+
 Run `node --test server/tests/*.test.js` and `cd client && npm run build`
 when dependencies have been installed.

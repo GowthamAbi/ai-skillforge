@@ -3,6 +3,8 @@ import EngineerJourney from '../models/EngineerJourney.js';
 import { COURSE_SUMMARY, LESSON_BY_ID, PATH_DAYS, PATH_MODULES, validUdemyLectureLink } from '../data/pathCurriculum.js';
 import { lessonQuiz } from '../data/pathQuiz.js';
 import { dateInIndia } from '../utils/studySchedule.js';
+import { rankCardForDay } from '../services/rankCard.js';
+import { emailRankCard, reportEmailConfigured } from '../services/rankCardEmail.js';
 
 const router = Router();
 const KEY = 'single-learner'; // Legacy SkillForge is also a single-learner app.
@@ -105,6 +107,18 @@ function serialize(state) {
 router.get('/dashboard', async (_req, res) => {
   try { res.json(serialize(await findJourney())); }
   catch (error) { res.status(500).json({ error: error.message || 'Learning path could not load' }); }
+});
+
+router.get('/rank-cards', async (_req, res) => {
+  try {
+    const state = await findJourney();
+    res.json({
+      emailConfigured: reportEmailConfigured(),
+      cards: state.days.filter(day => day.completedAt)
+        .map(day => rankCardForDay(state, day.day)).filter(Boolean)
+        .sort((a, b) => b.day - a.day)
+    });
+  } catch (error) { res.status(500).json({ error: error.message || 'Rank cards could not load' }); }
 });
 
 router.get('/lessons/:id/quiz', async (req, res) => {
@@ -237,7 +251,18 @@ router.post('/days/:day/complete', async (req, res) => {
   if (pending.length) return res.status(400).json({ error: 'Finish these steps first', pending });
   record.completedAt = new Date();
   await state.save();
-  res.json({ message: `Day ${n} complete. The next 4-hour day is unlocked immediately.`, nextDay: Math.min(n + 1, PATH_DAYS.length) });
+  const rankCard = rankCardForDay(state, n);
+  let emailStatus = 'not_configured';
+  try { emailStatus = await emailRankCard(rankCard); }
+  catch (error) {
+    emailStatus = 'failed';
+    console.error('Rank card email failed:', error.message);
+  }
+  res.json({
+    message: `Day ${n} complete. The next 4-hour day is unlocked immediately.`,
+    nextDay: Math.min(n + 1, PATH_DAYS.length),
+    rankCard, emailStatus
+  });
 });
 
 export default router;
