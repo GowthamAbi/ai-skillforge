@@ -9,7 +9,7 @@ self.addEventListener('push', event => {
     badge: '/favicon.ico',
     tag: 'ai-skillforge-study-reminder',
     renotify: false,
-    data: { url: '/' }
+    data: { url: message.url || '/' }
   }));
 });
 self.addEventListener('notificationclick', event => {

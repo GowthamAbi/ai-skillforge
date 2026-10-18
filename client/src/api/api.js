@@ -1,13 +1,15 @@
-const BASE = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? "https://ai-skillforge.onrender.com/api" : "http://localhost:5000/api");
-export async function api(path, options = {
-}) {
-  const url = `${BASE}${path}`;
+const LEGACY_BASE = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? "https://ai-skillforge.onrender.com/api" : "http://localhost:5000/api");
+const PATH_BASE = import.meta.env.VITE_PATH_API_URL || "https://ai-skillforge-path-api.onrender.com/api";
+export async function api(path, options = {}) {
+  const { pathApi = false, ...requestOptions } = options;
+  const base = pathApi || path.startsWith('/path/') ? PATH_BASE : LEGACY_BASE;
+  const url = `${base}${path}`;
   try {
     const response = await fetch(url, {
-      ...options,
+      ...requestOptions,
       headers: {
         "Content-Type": "application/json",
-        ...(options.headers || {
+        ...(requestOptions.headers || {
         }),
       },
     });
@@ -19,7 +21,7 @@ export async function api(path, options = {
     }
     if (!response.ok) {
       throw new Error(
-        data?.error ||
+        (data?.pending?.length ? data.pending.join(' · ') : data?.error) ||
           `Request failed (${response.status})`
       );
     }
