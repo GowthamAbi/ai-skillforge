@@ -19,7 +19,7 @@ export async function api(path, options = {
     }
     if (!response.ok) {
       throw new Error(
-        data?.error ||
+        (data?.pending?.length ? data.pending.join(' · ') : data?.error) ||
           `Request failed (${response.status})`
       );
     }

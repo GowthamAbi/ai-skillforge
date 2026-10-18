@@ -5,6 +5,7 @@ import Day from "../models/Day.js";
 import StudyPlan from "../models/StudyPlan.js";
 import studyPlanRouter from "./studyPlan.js";
 import notificationRouter from "./notifications.js";
+import engineerPathRouter from './engineerPath.js';
 import { getStudySchedule } from "../utils/studySchedule.js";
 import Doubt from "../models/Doubt.js";
 import {
@@ -16,6 +17,7 @@ import {
 const router=Router();
 router.use('/study-plan', studyPlanRouter);
 router.use('/notifications',notificationRouter);
+router.use('/path', engineerPathRouter);
 router.get('/capabilities',async(req,res)=>{
   try{
     res.json({

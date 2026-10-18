@@ -7,7 +7,7 @@ function toUInt8Array(base64url) {
   return Uint8Array.from(atob(base64), ch => ch.charCodeAt(0));
 }
 
-export default function NotificationSettings() {
+export default function NotificationSettings({ mode = 'old' }) {
   const [settings, setSettings] = useState(null);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
@@ -36,7 +36,7 @@ export default function NotificationSettings() {
         applicationServerKey: toUInt8Array(settings.publicKey)
       });
       await api('/notifications/subscribe', {
-        method: 'POST', body: JSON.stringify({ subscription: subscription.toJSON() })
+        method: 'POST', body: JSON.stringify({ subscription: subscription.toJSON(), mode })
       });
       setMessage('Subscribed. Your device can receive background reminders at 9 PM IST, if the server is running.');
     } catch (error) {

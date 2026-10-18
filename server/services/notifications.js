@@ -3,6 +3,8 @@ import StudyPlan from '../models/StudyPlan.js';
 import PushSubscription from '../models/PushSubscription.js';
 import { getStudySchedule } from '../utils/studySchedule.js';
 import { studyAlert } from './emailService.js';
+import EngineerJourney from '../models/EngineerJourney.js';
+import { PATH_DAYS } from '../data/pathCurriculum.js';
 
 const vapidReady = () => Boolean(
   process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY &&
@@ -36,7 +38,7 @@ export function notificationSettings() {
   };
 }
 
-export async function saveSubscription(subscription) {
+export async function saveSubscription(subscription, mode = 'old') {
   const endpoint = subscription?.endpoint;
   const keys = subscription?.keys;
   if (
@@ -46,7 +48,7 @@ export async function saveSubscription(subscription) {
   ) throw new Error('Invalid browser push subscription');
   return PushSubscription.updateOne(
     { endpoint },
-    { $set: { subscription } },
+    { $set: { subscription, mode } },
     { upsert: true }
   );
 }
@@ -54,26 +56,35 @@ export async function saveSubscription(subscription) {
 export async function sendDailyReminders(now = new Date()) {
   const scheduleDoc = await StudyPlan.findOne({ key: 'default' }).lean();
   const schedule = getStudySchedule(scheduleDoc?.startDate, scheduleDoc?.pausedDates || [], now);
-  if (!schedule.started || schedule.status !== 'active') return { skipped: schedule.status };
   const today = schedule.today;
-  const day = await Day.findOne({ daySubmitted: false }).sort({ day: 1 }).lean();
-  if (!day) return { skipped: 'finished' };
-  if (day.day > (schedule.todaysDay || 0)) return { skipped: 'not-due' };
+  const oldDay = schedule.started && schedule.status === 'active'
+    ? await Day.findOne({ daySubmitted: false }).sort({ day: 1 }).lean() : null;
+  const oldActive = Boolean(oldDay && oldDay.day <= (schedule.todaysDay || 0));
+  const path = await EngineerJourney.findOne({ key: 'single-learner' }).lean();
+  const pathDay = path && today >= path.startDate
+    ? PATH_DAYS.find(day => !path.days?.find(entry => entry.day === day.day && entry.completedAt)) : null;
+  if (!oldActive && !pathDay) return { skipped: 'no-active-plan' };
 
-  // Email remains a separate fallback for users without browser push.
-  await studyAlert(day).catch(error => console.error('Reminder email failed:', error.message));
+  // Preserve existing Old SkillForge reminder behavior and email fallback.
+  if (oldActive) await studyAlert(oldDay).catch(error => console.error('Reminder email failed:', error.message));
   const push = await webPush();
   if (!push) return { emailOnly: true };
   const subscribers = await PushSubscription.find({
     lastNotifiedDate: { $ne: today }
   }).lean();
-  const payload = JSON.stringify({
-    title: 'AI SkillForge · Time to study',
-    body: 'Day ' + day.day + ': ' + day.topic + '. Your 9 PM study plan is ready.',
-    url: '/'
-  });
   let delivered = 0;
   for (const subscriber of subscribers) {
+    const isPath = subscriber.mode === 'path';
+    if ((isPath && !pathDay) || (!isPath && !oldActive)) continue;
+    const payload = JSON.stringify(isPath ? {
+      title: 'AI Engineer Path · Your 4-hour session',
+      body: `Day ${pathDay.day}: ${pathDay.topic}. Open your videos and free quizzes anytime tonight.`,
+      url: '/#/path'
+    } : {
+      title: 'AI SkillForge · Time to study',
+      body: 'Day ' + oldDay.day + ': ' + oldDay.topic + '. Your 9 PM study plan is ready.',
+      url: '/#/old'
+    });
     try {
       await push.sendNotification(subscriber.subscription, payload, { TTL: 3600 });
       await PushSubscription.updateOne(
