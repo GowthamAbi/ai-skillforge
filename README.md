@@ -114,17 +114,23 @@ supported browsers. On browsers without native file sharing, Share downloads
 the PNG so the learner can attach it to WhatsApp or other apps manually.
 
 The backend also sends a styled HTML rank-card email **immediately when a day
-is completed** (regardless of time of day) using the existing Gmail SMTP
-configuration. Set these on the **new AI Engineer Path Render service**:
+is completed** (regardless of time of day). Render's **Free** web service blocks
+outbound SMTP ports 25/465/587, so use a transactional email provider's HTTPS
+API instead of Gmail SMTP. For example, Resend has a free allowance sufficient
+for one daily report. Set these on the **new AI Engineer Path Render service**:
 
 | Render environment variable | Purpose |
 | --- | --- |
 | `STUDY_EMAIL` | Verified recipient address for the report |
-| `EMAIL_USER` | Sending Gmail address |
-| `EMAIL_PASS` | Gmail app password, configured privately in Render |
+| `RESEND_API_KEY` | Resend sending-only API key, configured privately in Render |
+| `REPORT_FROM_EMAIL` | Sender from a domain verified in Resend, e.g. `AI SkillForge <reports@example.com>` |
 
-Never commit or share the Gmail password. If any value is missing or Gmail
-delivery fails, finishing the day still works and the PNG remains available
+Resend requires you to verify a sender domain for normal delivery. Its
+`onboarding@resend.dev` test sender can be used only under its testing rules;
+it is not a general-purpose production sender. The legacy `EMAIL_USER` and
+`EMAIL_PASS` Gmail SMTP option remains for environments that permit SMTP.
+Never commit or share email API keys or app passwords. If any value is missing
+or email delivery fails, finishing the day still works and the PNG remains available
 in Rank Cards; the UI reports whether the email was configured or sent.
 No paid AI or quiz API is involved. A day that was not submitted is **not**
 emailed automatically; a calendar-time daily digest needs an additional

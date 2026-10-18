@@ -4,7 +4,10 @@ const esc = input => String(input ?? '').replace(/[&<>"']/g, char =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 
 export function reportEmailConfigured() {
-  return Boolean(process.env.STUDY_EMAIL && process.env.EMAIL_USER && process.env.EMAIL_PASS);
+  return Boolean(process.env.STUDY_EMAIL && (
+    (process.env.RESEND_API_KEY && process.env.REPORT_FROM_EMAIL) ||
+    (process.env.EMAIL_USER && process.env.EMAIL_PASS)
+  ));
 }
 
 export function rankCardEmailHtml(report) {
@@ -38,6 +41,34 @@ export function rankCardEmailHtml(report) {
 // Called exactly once by the successful day-completion flow; no open mail relay.
 export async function emailRankCard(report) {
   if (!reportEmailConfigured()) return 'not_configured';
+  const subject = `🏆 Day ${report.day} unlocked — ${report.rank} Rank · +${report.xp} XP | AI SkillForge`;
+  const text = `AI SkillForge · Day ${report.day} complete!\nRank: ${report.rank}\nXP: +${report.xp}\nFocus: ${report.studyMinutes}/240 minutes\nVideos: ${report.watched}/${report.totalVideos}\nQuizzes: ${report.quizzesPassed}/${report.totalQuizzes}\nStreak: ${report.streak} days\n\n${report.motivation}\n\nOpen https://aitraning.netlify.app/#/path to download the image card.`;
+
+  // Render Free blocks SMTP outbound ports. Prefer HTTPS delivery on the free plan.
+  if (process.env.RESEND_API_KEY && process.env.REPORT_FROM_EMAIL) {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`
+      },
+      body: JSON.stringify({
+        from: process.env.REPORT_FROM_EMAIL,
+        to: [process.env.STUDY_EMAIL],
+        subject,
+        html: rankCardEmailHtml(report),
+        text
+      }),
+      signal: AbortSignal.timeout(12000)
+    });
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      throw new Error(`Email API rejected request (${response.status}): ${body.message || 'check verified sender and recipient'}`);
+    }
+    return 'sent';
+  }
+
+  // Retained for users on hosting plans that permit Gmail SMTP connections.
   const tx = nodemailer.createTransport({
     service: 'gmail',
     connectionTimeout: 10000,
@@ -47,9 +78,9 @@ export async function emailRankCard(report) {
   await tx.sendMail({
     from: process.env.EMAIL_USER,
     to: process.env.STUDY_EMAIL,
-    subject: `🏆 Day ${report.day} unlocked — ${report.rank} Rank · +${report.xp} XP | AI SkillForge`,
+    subject,
     html: rankCardEmailHtml(report),
-    text: `AI SkillForge · Day ${report.day} complete!\nRank: ${report.rank}\nXP: +${report.xp}\nFocus: ${report.studyMinutes}/240 minutes\nVideos: ${report.watched}/${report.totalVideos}\nQuizzes: ${report.quizzesPassed}/${report.totalQuizzes}\nStreak: ${report.streak} days\n\n${report.motivation}\n\nOpen https://aitraning.netlify.app/#/path to download the image card.`
+    text
   });
   return 'sent';
 }

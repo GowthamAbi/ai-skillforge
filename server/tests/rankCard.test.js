@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { PATH_DAYS } from '../data/pathCurriculum.js';
 import { rankCardForDay } from '../services/rankCard.js';
-import { rankCardEmailHtml } from '../services/rankCardEmail.js';
+import { emailRankCard, rankCardEmailHtml, reportEmailConfigured } from '../services/rankCardEmail.js';
 
 function completedJourney() {
   const first = PATH_DAYS[0];
@@ -59,4 +59,24 @@ test('rank card mail HTML escapes lesson names', () => {
   assert.ok(!html.includes('<img src=x'));
   assert.ok(html.includes('&lt;img src=x'));
   assert.ok(html.includes('DAY 1'));
+});
+
+test('HTTPS mail works on SMTP-blocking free hosts without exposing the API key', async t => {
+  const keys = ['STUDY_EMAIL', 'RESEND_API_KEY', 'REPORT_FROM_EMAIL'];
+  const original = Object.fromEntries(keys.map(key => [key, process.env[key]]));
+  t.after(() => keys.forEach(key => original[key] === undefined ? delete process.env[key] : process.env[key] = original[key]));
+  process.env.STUDY_EMAIL = 'learner@example.com';
+  process.env.RESEND_API_KEY = 'test-secret-value';
+  process.env.REPORT_FROM_EMAIL = 'AI SkillForge <reports@example.com>';
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    assert.equal(url, 'https://api.resend.com/emails');
+    assert.equal(options.headers.Authorization, 'Bearer test-secret-value');
+    const payload = JSON.parse(options.body);
+    assert.deepEqual(payload.to, ['learner@example.com']);
+    assert.match(payload.subject, /Day 1/);
+    assert.ok(!options.body.includes('test-secret-value'));
+    return { ok: true };
+  });
+  assert.equal(reportEmailConfigured(), true);
+  assert.equal(await emailRankCard(rankCardForDay(completedJourney(), 1)), 'sent');
 });
