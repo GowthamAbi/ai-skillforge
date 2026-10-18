@@ -4,7 +4,7 @@ import LegacyApp from './LegacyApp';
 import EngineerPath from './pages/EngineerPath';
 
 function readView() {
-  const path = window.location.hash.slice(1).split('/')[0];
+  const path = window.location.hash.replace(/^#\/?/, '').split('/')[0];
   return ['old', 'path'].includes(path) ? path : 'home';
 }
 
