@@ -2,6 +2,51 @@
 
 50-day AI Engineer study tracker: React + Tailwind + Node/Express + MongoDB + OpenAI + GitHub verification.
 
+## Old SkillForge + new AI Engineer Path (Oct 2026)
+
+The entry screen now has two animated cards and **no sidebar**. `Old SkillForge`
+opens the original dashboard at `/#/old`; its existing 50-day `Day`/`StudyPlan`
+collections and all original features are preserved. `AI Engineer Path` opens
+`/#/path`, with its own sidebar and a separate MongoDB `EngineerJourney`
+collection. The new journey starts **19 October 2026**, targets **240 focused
+minutes a day**, and immediately unlocks the next 4-hour study block on
+completion (the actual time of day is flexible).
+
+Course catalog imported from the previously reviewed roadmap:
+
+| Udemy course | Instructor | Imported entries | Udemy course lectures |
+| --- | --- | ---: | ---: |
+| Applied Generative AI: Inference to Agents – தமிழ் | Salman Faroz | 67 | 75 |
+| AI Engineer Core Track: LLM Engineering, RAG, QLoRA, Agents | Ed Donner / Ligency | 210 | 210 |
+| AI Engineer Agentic Track: The Complete Agent & MCP Course | Ed Donner / Ligency | 132 | 132 |
+| AI Engineer Production Track: Deploy LLMs & Agents at Scale | Ed Donner / Ligency | 123 | 124 |
+
+The imported 532 video titles and durations are drawn from the repo's existing
+50-day roadmap; imported video numbers represent **roadmap order**, not
+independently verified Udemy lecture IDs or exact official section numbers.
+The roadmap is missing 8 Tamil and 1 Production lecture metadata entries.
+Every video has a free 5-question topic-based checkpoint quiz (80% pass), and
+each module closes with a separate 10-question final test (80% pass).
+Questions are written in source (`server/data/pathQuiz.js`), not derived from
+private lecture transcripts or paid LLM calls. Unlock after marking watched.
+
+**Udemy linking:** The course page always opens on Udemy. For an exact lecture
+link, open the lecture in your signed-in Udemy account, copy its
+`/course/<slug>/learn/lecture/<id>` URL, and save it on that video's card.
+The button then opens that exact Udemy video; no lesson URLs are fabricated.
+Udemy watch progress is self-marked, not automatically synchronized.
+
+Module-end projects can be submitted through a GitHub repository URL or a
+small code-file text upload, followed by a free learner self-check. No paid AI
+review is performed. The old project's review and data remain unchanged.
+The new browser push subscriptions opt into `path` mode, so their 9 PM IST
+notification links directly to `/#/path`; legacy subscriptions retain Old mode.
+This needs HTTPS, server VAPID keys, and an always-running 9 PM IST scheduler.
+
+**Production limitation:** Authentication is not present in the original app;
+the new route also inherits single-learner data access. Secure all API routes
+and notifications before opening the deployed app to untrusted users.
+
 ## Daily timetable
 9:00 PM–2:00 AM: 15m revision, 105m learning, 10m break, 100m coding, 10m break, 40m project, 20m interview/recap.
 

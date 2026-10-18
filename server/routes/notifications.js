@@ -15,7 +15,7 @@ router.post('/subscribe', async (req, res) => {
     if (!notificationSettings().pushConfigured) {
       return res.status(503).json({ error: 'Browser push is not configured on the server' });
     }
-    await saveSubscription(req.body?.subscription);
+    await saveSubscription(req.body?.subscription, req.body?.mode === 'path' ? 'path' : 'old');
     res.status(201).json({ message: 'Browser subscribed to study reminders' });
   } catch (error) {
     res.status(400).json({ error: error.message || 'Subscription failed' });
