@@ -50,6 +50,21 @@ and notifications before opening the deployed app to untrusted users.
 ## Daily timetable
 9:00 PM–2:00 AM: 15m revision, 105m learning, 10m break, 100m coding, 10m break, 40m project, 20m interview/recap.
 
+## Smart Learning + personal Udemy Course Library (Oct 2026)
+
+The New **AI Engineer Path** now includes two additional sidebar tabs:
+
+- **My Course Library:** the four curated courses are protected, while the learner can add, edit, prioritize (Core / Supporting / Optional), or archive other courses from either Udemy account. Seven previously discussed Account 1 course *names* appear as optional form suggestions; the remaining course inventory is **not** assumed or automatically imported.
+- **Smart Learning:** the learner can add an optional Udemy video/topic with duration, course, verified-on-Udemy URL, skill category, practical coding task, and a selected study day. **Auto-fit** finds the next existing 50-day plan with enough spare minutes. Manual assignment is rejected if the day would exceed its capacity. Library-only unscheduled extras are allowed; lesson fields and assigned day can be edited later.
+- Existing 240-minute study days keep their core-video, 30-minute quiz, and 20-minute interview allocations. Extra videos **replace part of coding time**, with at least 35 minutes reserved for coding. They never increase the total daily target or block day completion, module tests, projects, original rank cards, or the Old dashboard.
+- The UI shows **possible topic overlaps** based on reproducible title-token similarity with existing roadmap entries and other extras. These are suggestions only: no automatic skipping or deletion. The learner chooses to skip/restore a repeated extra. Skipped lessons free their assigned time; archiving keeps any recorded watch/quiz history.
+- Each custom video can be self-marked watched and receives the same free, deterministic **five-question practice quiz** as built-in videos. The bank now includes Python, SQL and full-stack topic questions. Quizzes are **not extracted from private Udemy video transcripts**.
+- A **Job-ready skills checklist** summarizes *tracked lessons and actual quiz passes* by skill category. It is not a certified measure of hiring readiness. The seven Account 1 suggestions only prefill names and priorities; the learner supplies missing account URLs and lesson data.
+
+Optional library records are persisted in `EngineerJourney.customCourses` and `.customLessons`; built-in `PATH_COURSES`, `PATH_DAYS` and prior progress remain unchanged. New endpoints under `/api/path`: `POST/PATCH/DELETE /courses`, `POST/PATCH/DELETE /extra-lessons` and `POST /extra-lessons/:id/status`. Custom lesson quizzes use existing `/lessons/:id/quiz` endpoints. These are designed for the existing **single-learner prototype**, with no authentication; add account protection before sharing the API publicly.
+
+**Deploy the New Path Render backend before the Netlify frontend**, so its `/api/path/dashboard` response includes `library` and the new mutation endpoints. No extra API keys or paid quiz service are needed. Run `node --test server/tests/*.test.js` and `npm run build --prefix client` before deploying.
+
 ## Setup
 Server: copy `.env.example` to `.env`, fill MongoDB/OpenAI/GitHub values, then `npm install`, `npm run seed`, `npm run dev`.
 Client: `npm install`, `npm run dev`.
@@ -102,6 +117,39 @@ push when the tab/phone is locked:
 
 The existing app has no login/authentication; add authenticated subscriptions
 and per-user data isolation before opening it to multiple public users.
+
+### New AI Engineer Path daily rank cards
+
+After **Submit day & unlock next 4 hours** passes its checks, SkillForge
+generates a celebratory daily **Rank Card** from tracked study minutes, watched
+videos and actual quiz scores. It records earned XP, the rank, completed video
+titles, badges and the completion-date streak. Go to **Rank Cards** in the new
+sidebar to reopen any past card and **Download PNG** or **Share card** from
+supported browsers. On browsers without native file sharing, Share downloads
+the PNG so the learner can attach it to WhatsApp or other apps manually.
+
+The backend also sends a styled HTML rank-card email **immediately when a day
+is completed** (regardless of time of day). Render's **Free** web service blocks
+outbound SMTP ports 25/465/587, so use a transactional email provider's HTTPS
+API instead of Gmail SMTP. For example, Resend has a free allowance sufficient
+for one daily report. Set these on the **new AI Engineer Path Render service**:
+
+| Render environment variable | Purpose |
+| --- | --- |
+| `STUDY_EMAIL` | Verified recipient address for the report |
+| `RESEND_API_KEY` | Resend sending-only API key, configured privately in Render |
+| `REPORT_FROM_EMAIL` | Sender from a domain verified in Resend, e.g. `AI SkillForge <reports@example.com>` |
+
+Resend requires you to verify a sender domain for normal delivery. Its
+`onboarding@resend.dev` test sender can be used only under its testing rules;
+it is not a general-purpose production sender. The legacy `EMAIL_USER` and
+`EMAIL_PASS` Gmail SMTP option remains for environments that permit SMTP.
+Never commit or share email API keys or app passwords. If any value is missing
+or email delivery fails, finishing the day still works and the PNG remains available
+in Rank Cards; the UI reports whether the email was configured or sent.
+No paid AI or quiz API is involved. A day that was not submitted is **not**
+emailed automatically; a calendar-time daily digest needs an additional
+reliable scheduled worker and recipient preference.
 
 Run `node --test server/tests/*.test.js` and `cd client && npm run build`
 when dependencies have been installed.

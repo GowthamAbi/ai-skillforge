@@ -1,13 +1,18 @@
 import { Router } from 'express';
+import { randomUUID } from 'node:crypto';
 import EngineerJourney from '../models/EngineerJourney.js';
 import { COURSE_SUMMARY, LESSON_BY_ID, PATH_DAYS, PATH_MODULES, validUdemyLectureLink } from '../data/pathCurriculum.js';
 import { lessonQuiz } from '../data/pathQuiz.js';
 import { dateInIndia } from '../utils/studySchedule.js';
+import { rankCardForDay } from '../services/rankCard.js';
+import { emailRankCard, reportEmailConfigured } from '../services/rankCardEmail.js';
+import { SKILL_AREAS, dailyBudget, findDayForExtra, possibleOverlaps, sameUdemyCourse, serializeLibrary, skillForTitle, validCourseUrl, validLectureOrCourseUrl } from '../services/smartLearning.js';
 
 const router = Router();
 const KEY = 'single-learner'; // Legacy SkillForge is also a single-learner app.
 const SCORE_REQUIRED = 80;
 const todayIST = () => dateInIndia();
+const asyncRoute = handler => (req, res, next) => Promise.resolve(handler(req, res, next)).catch(next);
 
 async function findJourney() {
   return EngineerJourney.findOneAndUpdate(
@@ -20,6 +25,8 @@ const findLesson = (state, id) => state.lessons.find(item => item.lessonId === i
 const findDay = (state, n) => state.days.find(item => item.day === n);
 const findProject = (state, id) => state.projects.find(item => item.moduleId === id);
 const findModuleTest = (state, id) => state.moduleTests.find(item => item.moduleId === id);
+const findCustomLesson = (state, id) => state.customLessons.find(item => item.id === id && !item.archivedAt);
+const anyLesson = (state, id) => LESSON_BY_ID.get(id) || findCustomLesson(state, id);
 const pass = item => Boolean(item?.quizAttempts?.some(a => a.total > 0 && a.score / a.total * 100 >= SCORE_REQUIRED));
 const testPass = item => Boolean(item?.attempts?.some(a => a.total > 0 && a.score / a.total * 100 >= SCORE_REQUIRED));
 const moduleForDay = n => PATH_MODULES.find(m => m.to === n);
@@ -87,6 +94,7 @@ function serialize(state) {
     firstUnfinishedDay: current?.day || 1,
     totalDays: days.length,
     courses: COURSE_SUMMARY,
+    library: serializeLibrary(state),
     modules: PATH_MODULES.map(module => {
       const project = moduleProjects.get(module.id);
       const test = findModuleTest(state, module.id);
@@ -107,12 +115,181 @@ router.get('/dashboard', async (_req, res) => {
   catch (error) { res.status(500).json({ error: error.message || 'Learning path could not load' }); }
 });
 
-router.get('/lessons/:id/quiz', async (req, res) => {
-  const lesson = LESSON_BY_ID.get(req.params.id);
+// Optional learner-managed courses never rewrite the locked 50-day core roadmap.
+router.post('/courses', asyncRoute(async (req, res) => {
+  const title = String(req.body?.title || '').trim();
+  const instructor = String(req.body?.instructor || '').trim();
+  const url = String(req.body?.url || '').trim();
+  const account = Number(req.body?.account);
+  const priority = String(req.body?.priority || 'supporting');
+  const category = String(req.body?.category || 'general');
+  if (title.length < 3 || title.length > 160 || instructor.length > 100) return res.status(400).json({ error: 'Course title must be 3–160 characters; instructor 100 characters or fewer' });
+  if (!validCourseUrl(url) || url.length > 500) return res.status(400).json({ error: 'Use a real HTTPS Udemy course URL or leave it blank' });
+  if (![1, 2].includes(account) || !['core', 'supporting', 'optional'].includes(priority) || !['general', ...SKILL_AREAS.map(a => a.id)].includes(category)) {
+    return res.status(400).json({ error: 'Select a valid account, learning priority and skill category' });
+  }
+  const state = await findJourney();
+  if (state.customCourses.filter(c => !c.archivedAt).length >= 100) return res.status(400).json({ error: 'Course library limit reached (100 custom courses)' });
+  if ([...COURSE_SUMMARY, ...state.customCourses.filter(c => !c.archivedAt)].some(c => c.title.trim().toLowerCase() === title.toLowerCase())) {
+    return res.status(409).json({ error: 'This course is already in your library' });
+  }
+  const course = { id: `user-course-${randomUUID()}`, title, instructor, url, account, priority, category };
+  state.customCourses.push(course);
+  await state.save();
+  res.status(201).json({ course, message: 'Course added to My Course Library' });
+}));
+
+router.patch('/courses/:id', asyncRoute(async (req, res) => {
+  const state = await findJourney();
+  const course = state.customCourses.find(item => item.id === req.params.id && !item.archivedAt);
+  if (!course) return res.status(404).json({ error: 'Custom course not found' });
+  if (req.body?.title !== undefined) {
+    const title = String(req.body.title).trim();
+    if (title.length < 3 || title.length > 160) return res.status(400).json({ error: 'Course title must be 3–160 characters' });
+    if ([...COURSE_SUMMARY, ...state.customCourses.filter(c => !c.archivedAt && c.id !== course.id)]
+      .some(c => c.title.trim().toLowerCase() === title.toLowerCase())) return res.status(409).json({ error: 'This course title is already in your library' });
+    course.title = title;
+  }
+  if (req.body?.instructor !== undefined) {
+    const instructor = String(req.body.instructor).trim();
+    if (instructor.length > 100) return res.status(400).json({ error: 'Instructor name must be under 100 characters' });
+    course.instructor = instructor;
+  }
+  if (req.body?.url !== undefined) {
+    const url = String(req.body.url).trim();
+    if (url.length > 500 || !validCourseUrl(url)) return res.status(400).json({ error: 'Use a real HTTPS Udemy course URL or leave blank' });
+    course.url = url;
+  }
+  if (req.body?.category !== undefined) {
+    if (!['general', ...SKILL_AREAS.map(a=>a.id)].includes(req.body.category)) return res.status(400).json({ error: 'Invalid skill category' });
+    course.category = req.body.category;
+  }
+  if (req.body?.priority !== undefined) {
+    if (!['core', 'supporting', 'optional'].includes(req.body.priority)) return res.status(400).json({ error: 'Invalid priority' });
+    course.priority = req.body.priority;
+  }
+  await state.save();
+  res.json({ message: 'Course updated' });
+}));
+
+router.delete('/courses/:id', asyncRoute(async (req, res) => {
+  const state = await findJourney();
+  const course = state.customCourses.find(item => item.id === req.params.id && !item.archivedAt);
+  if (!course) return res.status(404).json({ error: 'Custom course not found' });
+  course.archivedAt = new Date();
+  for (const lesson of state.customLessons.filter(item => item.courseId === course.id)) lesson.archivedAt ||= new Date();
+  await state.save();
+  res.json({ message: 'Course and its extras archived. Existing lesson history was retained.' });
+}));
+
+function assignDay(choice, lesson, existingExtras, currentDay) {
+  if (choice === 'auto') return { assignedDay: findDayForExtra(lesson, existingExtras, currentDay) };
+  if (choice === null || choice === undefined || choice === '' || choice === 'none') return { assignedDay: null };
+  const value = Number(choice);
+  if (!Number.isInteger(value) || value < 1 || value > PATH_DAYS.length) return { error: 'Choose Auto-fit, Library only or a day from 1–50' };
+  const remaining = dailyBudget(PATH_DAYS[value - 1], existingExtras).extraRemainingMinutes;
+  if (lesson.durationMinutes > remaining) return { error: `Day ${value} has only ${remaining} extra minutes available while preserving coding practice. Choose another day or Auto-fit.` };
+  return { assignedDay: value };
+}
+
+router.get('/extra-lessons/overlaps', asyncRoute(async (req, res) => {
+  const title = String(req.query.title || '').trim();
+  if (title.length < 3 || title.length > 180) return res.status(400).json({ error: 'Enter a topic title of 3–180 characters' });
+  const state = await findJourney();
+  const candidates = [...PATH_DAYS.flatMap(day => day.lessons), ...state.customLessons.filter(lesson => !lesson.archivedAt)];
+  res.json({ matches: possibleOverlaps({ id: 'new-extra', title }, candidates, 5), note: 'Title similarity only; review suggestions yourself before skipping.' });
+}));
+
+router.post('/extra-lessons', asyncRoute(async (req, res) => {
+  const state = await findJourney();
+  const courseId = String(req.body?.courseId || '');
+  const course = COURSE_SUMMARY.find(c => c.id === courseId) || state.customCourses.find(c => c.id === courseId && !c.archivedAt);
+  if (!course) return res.status(400).json({ error: 'Choose a course from your library first' });
+  const title = String(req.body?.title || '').trim();
+  const durationMinutes = Number(req.body?.durationMinutes);
+  const videoUrl = String(req.body?.videoUrl || '').trim();
+  const practiceTask = String(req.body?.practiceTask || '').trim();
+  const category = String(req.body?.category || skillForTitle(title));
+  if (title.length < 3 || title.length > 180 || !Number.isInteger(durationMinutes) || durationMinutes < 1 || durationMinutes > 180) {
+    return res.status(400).json({ error: 'Enter a 3–180 character video/topic title and duration of 1–180 minutes' });
+  }
+  if (practiceTask.length > 500 || videoUrl.length > 500 || !validLectureOrCourseUrl(videoUrl)) return res.status(400).json({ error: 'Practice task must be under 500 characters and the video must have a real HTTPS Udemy URL' });
+  if (!sameUdemyCourse(videoUrl, course.url || course.courseUrl)) return res.status(400).json({ error: 'The lecture URL must belong to the selected Udemy course' });
+  if (!['general', ...SKILL_AREAS.map(a => a.id)].includes(category)) return res.status(400).json({ error: 'Choose a valid skill category' });
+  if (state.customLessons.filter(l => !l.archivedAt).length >= 300) return res.status(400).json({ error: 'Extra lesson library limit reached (300)' });
+  const lesson = { id: `extra-${randomUUID()}`, courseId, title, durationMinutes, videoUrl, category, practiceTask };
+  const active = state.customLessons.filter(item => !item.archivedAt && !item.skippedAt);
+  const choice = assignDay(req.body?.assignedDay, lesson, active, unlockedDay(state));
+  if (choice.error) return res.status(400).json({ error: choice.error });
+  lesson.assignedDay = choice.assignedDay;
+  state.customLessons.push(lesson);
+  await state.save();
+  res.status(201).json({ lesson, message: choice.assignedDay ? `Extra learning saved and fitted into Day ${choice.assignedDay}` : 'Extra learning saved in Library (not scheduled yet)' });
+}));
+
+router.patch('/extra-lessons/:id', asyncRoute(async (req, res) => {
+  const state = await findJourney();
+  const lesson = findCustomLesson(state, req.params.id);
+  if (!lesson) return res.status(404).json({ error: 'Extra lesson not found' });
+  const others = state.customLessons.filter(item => item.id !== lesson.id && !item.archivedAt && !item.skippedAt);
+  const title = req.body?.title === undefined ? lesson.title : String(req.body.title).trim();
+  const videoUrl = req.body?.videoUrl === undefined ? (lesson.videoUrl || '') : String(req.body.videoUrl).trim();
+  const practiceTask = req.body?.practiceTask === undefined ? (lesson.practiceTask || '') : String(req.body.practiceTask).trim();
+  const durationMinutes = req.body?.durationMinutes === undefined ? lesson.durationMinutes : Number(req.body.durationMinutes);
+  const category = req.body?.category === undefined ? lesson.category : String(req.body.category);
+  if (title.length < 3 || title.length > 180 || !Number.isInteger(durationMinutes) || durationMinutes < 1 || durationMinutes > 180 ||
+      videoUrl.length > 500 || !validLectureOrCourseUrl(videoUrl) || practiceTask.length > 500 || !['general', ...SKILL_AREAS.map(a=>a.id)].includes(category)) {
+    return res.status(400).json({ error: 'Check title, Udemy URL, 1–180 minute duration, category and task length' });
+  }
+  const course = COURSE_SUMMARY.find(c => c.id === lesson.courseId) || state.customCourses.find(c => c.id === lesson.courseId && !c.archivedAt);
+  if (!sameUdemyCourse(videoUrl, course?.url || course?.courseUrl)) return res.status(400).json({ error: 'The lecture URL must belong to the selected Udemy course' });
+  const next = { ...lesson.toObject(), title, videoUrl, durationMinutes, practiceTask, category };
+  const requestedDay = req.body?.assignedDay === undefined ? lesson.assignedDay : req.body.assignedDay;
+  const choice = assignDay(requestedDay, next, others, unlockedDay(state));
+  if (choice.error) return res.status(400).json({ error: choice.error });
+  Object.assign(lesson, { title, videoUrl, durationMinutes, practiceTask, category, assignedDay: choice.assignedDay });
+  await state.save();
+  res.json({ message: choice.assignedDay ? `Extra lesson saved on Day ${choice.assignedDay}` : 'Extra lesson saved in your unscheduled library', assignedDay: choice.assignedDay });
+}));
+
+router.post('/extra-lessons/:id/status', asyncRoute(async (req, res) => {
+  const state = await findJourney();
+  const lesson = findCustomLesson(state, req.params.id);
+  if (!lesson) return res.status(404).json({ error: 'Extra lesson not found' });
+  if (req.body?.action === 'skip') lesson.skippedAt = new Date();
+  else if (req.body?.action === 'restore') lesson.skippedAt = undefined;
+  else return res.status(400).json({ error: 'Use skip or restore' });
+  await state.save();
+  res.json({ skipped: Boolean(lesson.skippedAt), message: lesson.skippedAt ? 'Repeated lesson skipped; saved history remains' : 'Extra lesson restored to your study plan' });
+}));
+
+router.delete('/extra-lessons/:id', asyncRoute(async (req, res) => {
+  const state = await findJourney();
+  const lesson = findCustomLesson(state, req.params.id);
+  if (!lesson) return res.status(404).json({ error: 'Extra lesson not found' });
+  lesson.archivedAt = new Date();
+  await state.save();
+  res.json({ message: 'Extra lesson archived; prior quiz attempts remain saved' });
+}));
+
+router.get('/rank-cards', async (_req, res) => {
+  try {
+    const state = await findJourney();
+    res.json({
+      emailConfigured: reportEmailConfigured(),
+      cards: state.days.filter(day => day.completedAt)
+        .map(day => rankCardForDay(state, day.day)).filter(Boolean)
+        .sort((a, b) => b.day - a.day)
+    });
+  } catch (error) { res.status(500).json({ error: error.message || 'Rank cards could not load' }); }
+});
+
+router.get('/lessons/:id/quiz', asyncRoute(async (req, res) => {
+  const lesson = LESSON_BY_ID.get(req.params.id) || findCustomLesson(await findJourney(), req.params.id);
   if (!lesson) return res.status(404).json({ error: 'Lesson not found' });
   const questions = lessonQuiz(lesson).map(({ id, question, options }) => ({ id, question, options }));
   res.json({ lessonId: lesson.id, questions, passMark: SCORE_REQUIRED, source: 'Free topic-based question bank; not a video transcript' });
-});
+}));
 
 router.post('/lessons/:id/link', async (req, res) => {
   const lesson = LESSON_BY_ID.get(req.params.id);
@@ -129,28 +306,28 @@ router.post('/lessons/:id/link', async (req, res) => {
   res.json({ message: 'Exact Udemy lecture link saved', deepLink: link });
 });
 
-router.post('/lessons/:id/watched', async (req, res) => {
-  const lesson = LESSON_BY_ID.get(req.params.id);
-  if (!lesson) return res.status(404).json({ error: 'Lesson not found' });
+router.post('/lessons/:id/watched', asyncRoute(async (req, res) => {
   const state = await findJourney();
-  const day = PATH_DAYS.find(item => item.lessons.some(v => v.id === lesson.id));
-  if (day.day > unlockedDay(state)) return res.status(403).json({ error: 'Finish the previous day first' });
+  const lesson = anyLesson(state, req.params.id);
+  if (!lesson) return res.status(404).json({ error: 'Lesson not found' });
+  const day = LESSON_BY_ID.has(lesson.id) ? PATH_DAYS.find(item => item.lessons.some(v => v.id === lesson.id)) : null;
+  if (day && day.day > unlockedDay(state)) return res.status(403).json({ error: 'Finish the previous day first' });
   let record = findLesson(state, lesson.id);
   if (!record) { state.lessons.push({ lessonId: lesson.id }); record = findLesson(state, lesson.id); }
   record.watchedAt ||= new Date();
   await state.save();
   res.json({ watched: true, note: 'Self-marked complete; Udemy watch history is not automatically synced' });
-});
+}));
 
-router.post('/lessons/:id/quiz', async (req, res) => {
-  const lesson = LESSON_BY_ID.get(req.params.id);
+router.post('/lessons/:id/quiz', asyncRoute(async (req, res) => {
+  const state = await findJourney();
+  const lesson = anyLesson(state, req.params.id);
   if (!lesson) return res.status(404).json({ error: 'Lesson not found' });
   const answers = req.body?.answers;
   const questions = lessonQuiz(lesson);
   if (!Array.isArray(answers) || answers.length !== questions.length || answers.some(n => !Number.isInteger(n) || n < 0 || n > 3)) {
     return res.status(400).json({ error: 'Answer all five questions before submitting' });
   }
-  const state = await findJourney();
   const record = findLesson(state, lesson.id);
   if (!record?.watchedAt) return res.status(403).json({ error: 'Mark the video watched to unlock its quiz' });
   const score = questions.filter((question, index) => question.answer === answers[index]).length;
@@ -158,7 +335,7 @@ router.post('/lessons/:id/quiz', async (req, res) => {
   await state.save();
   res.json({ score, total: questions.length, passed: score / questions.length * 100 >= SCORE_REQUIRED,
     review: questions.map((question, i) => ({ index: i, correct: question.answer === answers[i], correctAnswer: question.answer, explanation: question.explanation })) });
-});
+}));
 
 router.post('/days/:day/time', async (req, res) => {
   const n = Number(req.params.day);
@@ -237,7 +414,18 @@ router.post('/days/:day/complete', async (req, res) => {
   if (pending.length) return res.status(400).json({ error: 'Finish these steps first', pending });
   record.completedAt = new Date();
   await state.save();
-  res.json({ message: `Day ${n} complete. The next 4-hour day is unlocked immediately.`, nextDay: Math.min(n + 1, PATH_DAYS.length) });
+  const rankCard = rankCardForDay(state, n);
+  let emailStatus = 'not_configured';
+  try { emailStatus = await emailRankCard(rankCard); }
+  catch (error) {
+    emailStatus = 'failed';
+    console.error('Rank card email failed:', error.message);
+  }
+  res.json({
+    message: `Day ${n} complete. The next 4-hour day is unlocked immediately.`,
+    nextDay: Math.min(n + 1, PATH_DAYS.length),
+    rankCard, emailStatus
+  });
 });
 
 export default router;

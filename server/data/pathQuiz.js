@@ -1,6 +1,27 @@
 // Hand-authored, deterministic practice checks. No paid AI/API or generated transcript claims.
 const q = (question, options, answer, explanation) => ({ question, options, answer, explanation });
 const BANKS = {
+  python: [
+    q('What does a Python list comprehension create?', ['A new list from an iterable', 'A database index', 'A Docker image', 'A package lockfile'], 0, 'A comprehension constructs a list by transforming or filtering an iterable.'),
+    q('Which tool helps isolate Python package dependencies for a project?', ['CSS modules', 'A virtual environment', 'Git branches alone', 'SQL views'], 1, 'A virtual environment keeps dependencies scoped to a project.'),
+    q('What does a Python dictionary primarily store?', ['Ordered pixels', 'Only floating-point numbers', 'Key-value pairs', 'Compiled bytecode only'], 2, 'Dictionary keys map to values for efficient lookup.'),
+    q('What should you do when a Python function fails a test?', ['Disable every test', 'Ignore the traceback', 'Commit the exception', 'Reproduce, debug and add a regression test'], 3, 'Reproducing failures and testing fixes prevents regressions.'),
+    q('What does `with open(path) as file` help manage?', ['Closing the file resource automatically', 'GPU memory optimization', 'SQL transactions exclusively', 'Browser session cookies'], 0, 'Context managers clean up files even if an error occurs.')
+  ],
+  sql: [
+    q('What does SQL JOIN primarily do?', ['Resize a database', 'Combine rows from related tables', 'Train an LLM', 'Encrypt frontend CSS'], 1, 'JOIN combines records based on matching related columns.'),
+    q('Which clause groups rows before aggregate calculations?', ['ORDER BY', 'LIMIT', 'GROUP BY', 'DROP'], 2, 'GROUP BY enables aggregates per group.'),
+    q('How should app code safely include user values in SQL?', ['String concatenation', 'Raw interpolated queries', 'Removing error messages', 'Parameterized queries'], 3, 'Parameters protect query values from SQL injection.'),
+    q('What is a primary key used for?', ['Uniquely identifying a row', 'Styling a form', 'Sorting JavaScript imports', 'Running CI'], 0, 'A primary key uniquely identifies a record.'),
+    q('What should you check before optimizing a slow SQL query?', ['Browser theme', 'Query plan and indexes', 'Udemy playback speed', 'CSS selector names'], 1, 'EXPLAIN/query plans help identify scans and opportunities for indexes.')
+  ],
+  fullstack: [
+    q('What should a REST API return when creating a resource successfully?', ['Only HTML comments', 'Always a 404', 'A success status such as 201 and useful data', 'An exposed secret'], 2, 'HTTP 201 indicates successful resource creation.'),
+    q('Where should production API keys live?', ['Public JavaScript variables', 'README screenshots', 'Browser localStorage for every visitor', 'Protected server-side configuration'], 3, 'Secrets must remain outside public frontend bundles.'),
+    q('Why validate request bodies on the server?', ['Clients can be modified or bypassed', 'To remove all frontend checks', 'To skip integration tests', 'To make every request public'], 0, 'Client-side validation alone cannot enforce server trust boundaries.'),
+    q('How do automated integration tests help a full-stack project?', ['They guarantee perfect UI design', 'They check components working across boundaries', 'They replace production monitoring', 'They eliminate database migrations'], 1, 'Integration tests exercise multiple layers together.'),
+    q('What is a good practice when deploying a React frontend and API?', ['Hard-code every secret in React', 'Disable HTTPS', 'Configure safe API origins and environment-specific URLs', 'Ignore network errors'], 2, 'Deployment requires correct public URLs, CORS and secret handling.')
+  ],
   rag: [
     q('What is the main role of retrieval in RAG?', ['Retrieve relevant external context', 'Train the model from scratch', 'Replace the tokenizer', 'Compress CSS files'], 0, 'RAG supplies relevant retrieved context at answer time.'),
     q('Which choice most directly improves RAG source traceability?', ['Longer system prompts', 'Showing document/source citations', 'Removing chunk metadata', 'Increasing randomness'], 1, 'Source metadata makes retrieved evidence traceable.'),
@@ -60,7 +81,11 @@ const BANKS = {
 };
 
 export function topicCategory(lesson) {
+  const chosen = { python: 'python', sql: 'sql', ml: 'training', llm: 'model', rag: 'rag', agents: 'agent', deployment: 'deployment', evaluation: 'evaluation', fullstack: 'fullstack', general: 'basic' }[lesson?.category];
+  if (chosen) return chosen;
   const text = String(lesson?.title || '').toLowerCase();
+  if (/\bsql\b|postgres|mysql|database query|\bjoins?\b/.test(text)) return 'sql';
+  if (/\bpython\b|pandas|numpy|fastapi|pytest/.test(text)) return 'python';
   if (/rag|retriev|vector store|chunk|rerank|knowledge base/.test(text)) return 'rag';
   if (/agent|langgraph|crewai|tool call|mcp|autogen|pydanticai|strands|multi-agent|workflow/.test(text)) return 'agent';
   if (/deploy|docker|cloud|aws|bedrock|lambda|azure|terraform|vercel|ci\/cd|monitor|production|kubernetes|security|authentication/.test(text)) return 'deployment';

@@ -12,10 +12,10 @@ export default function NotificationSettings({ mode = 'old' }) {
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
   useEffect(() => {
-    api('/notifications/settings').then(setSettings).catch(() => {
+    api('/notifications/settings', { pathApi: mode === 'path' }).then(setSettings).catch(() => {
       setMessage('Notification settings could not be loaded');
     });
-  }, []);
+  }, [mode]);
 
   const enable = async () => {
     setBusy(true);
@@ -36,7 +36,7 @@ export default function NotificationSettings({ mode = 'old' }) {
         applicationServerKey: toUInt8Array(settings.publicKey)
       });
       await api('/notifications/subscribe', {
-        method: 'POST', body: JSON.stringify({ subscription: subscription.toJSON(), mode })
+        method: 'POST', body: JSON.stringify({ subscription: subscription.toJSON(), mode }), pathApi: mode === 'path'
       });
       setMessage('Subscribed. Your device can receive background reminders at 9 PM IST, if the server is running.');
     } catch (error) {
