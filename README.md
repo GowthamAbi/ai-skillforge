@@ -50,6 +50,21 @@ and notifications before opening the deployed app to untrusted users.
 ## Daily timetable
 9:00 PM–2:00 AM: 15m revision, 105m learning, 10m break, 100m coding, 10m break, 40m project, 20m interview/recap.
 
+## Smart Learning + personal Udemy Course Library (Oct 2026)
+
+The New **AI Engineer Path** now includes two additional sidebar tabs:
+
+- **My Course Library:** the four curated courses are protected, while the learner can add, edit, prioritize (Core / Supporting / Optional), or archive other courses from either Udemy account. Seven previously discussed Account 1 course *names* appear as optional form suggestions; the remaining course inventory is **not** assumed or automatically imported.
+- **Smart Learning:** the learner can add an optional Udemy video/topic with duration, course, verified-on-Udemy URL, skill category, practical coding task, and a selected study day. **Auto-fit** finds the next existing 50-day plan with enough spare minutes. Manual assignment is rejected if the day would exceed its capacity. Library-only unscheduled extras are allowed; lesson fields and assigned day can be edited later.
+- Existing 240-minute study days keep their core-video, 30-minute quiz, and 20-minute interview allocations. Extra videos **replace part of coding time**, with at least 35 minutes reserved for coding. They never increase the total daily target or block day completion, module tests, projects, original rank cards, or the Old dashboard.
+- The UI shows **possible topic overlaps** based on reproducible title-token similarity with existing roadmap entries and other extras. These are suggestions only: no automatic skipping or deletion. The learner chooses to skip/restore a repeated extra. Skipped lessons free their assigned time; archiving keeps any recorded watch/quiz history.
+- Each custom video can be self-marked watched and receives the same free, deterministic **five-question practice quiz** as built-in videos. The bank now includes Python, SQL and full-stack topic questions. Quizzes are **not extracted from private Udemy video transcripts**.
+- A **Job-ready skills checklist** summarizes *tracked lessons and actual quiz passes* by skill category. It is not a certified measure of hiring readiness. The seven Account 1 suggestions only prefill names and priorities; the learner supplies missing account URLs and lesson data.
+
+Optional library records are persisted in `EngineerJourney.customCourses` and `.customLessons`; built-in `PATH_COURSES`, `PATH_DAYS` and prior progress remain unchanged. New endpoints under `/api/path`: `POST/PATCH/DELETE /courses`, `POST/PATCH/DELETE /extra-lessons` and `POST /extra-lessons/:id/status`. Custom lesson quizzes use existing `/lessons/:id/quiz` endpoints. These are designed for the existing **single-learner prototype**, with no authentication; add account protection before sharing the API publicly.
+
+**Deploy the New Path Render backend before the Netlify frontend**, so its `/api/path/dashboard` response includes `library` and the new mutation endpoints. No extra API keys or paid quiz service are needed. Run `node --test server/tests/*.test.js` and `npm run build --prefix client` before deploying.
+
 ## Setup
 Server: copy `.env.example` to `.env`, fill MongoDB/OpenAI/GitHub values, then `npm install`, `npm run seed`, `npm run dev`.
 Client: `npm install`, `npm run dev`.

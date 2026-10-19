@@ -1,0 +1,115 @@
+import { useEffect, useMemo, useState } from 'react';
+import { AlertTriangle, ArrowRight, BookOpen, CheckCircle2, Clock3, Code2, ExternalLink, Lightbulb, ListChecks, Pencil, Play, PlusCircle, RotateCcw, SkipForward, Sparkles, Trash2, WandSparkles } from 'lucide-react';
+import { api } from '../api/api';
+
+const input = 'mt-1.5 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100';
+const emptyLesson = { courseId: '', title: '', durationMinutes: '20', videoUrl: '', category: 'auto', practiceTask: '', assignedDay: 'auto' };
+
+function ExtraQuiz({ lesson, onChanged }) {
+  const [quiz, setQuiz] = useState(null);
+  const [answers, setAnswers] = useState({});
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    let active = true;
+    setQuiz(null); setAnswers({}); setResult(null); setError('');
+    if (lesson.watched && !lesson.skippedAt) api(`/path/lessons/${lesson.id}/quiz`)
+      .then(value=>{ if(active) setQuiz(value); })
+      .catch(error=>{ if(active) setError(error.message); });
+    return () => { active = false; };
+  }, [lesson.id, lesson.watched, lesson.skippedAt]);
+  const submit = async () => {
+    setBusy(true); setError('');
+    try {
+      const value = await api(`/path/lessons/${lesson.id}/quiz`, { method: 'POST', body: JSON.stringify({ answers: quiz.questions.map((_,index)=>answers[index]) }) });
+      setResult(value); await onChanged();
+    } catch(error) { setError(error.message); }
+    finally { setBusy(false); }
+  };
+  if (!lesson.watched) return <p className="text-sm text-slate-500">Mark watched first to unlock the free practice quiz.</p>;
+  if (!quiz) return <p className="text-sm text-slate-500">Loading questions… {error}</p>;
+  return <div className="mt-3 rounded-xl border border-indigo-100 bg-indigo-50/50 p-3 sm:p-4"><h5 className="text-sm font-extrabold text-indigo-800">Free topic-based checkpoint · 5 questions</h5><p className="mt-1 text-xs text-indigo-700">These questions come from a general topic question bank, not the private Udemy transcript. Pass mark 80%.</p>
+    {quiz.questions.map((item,index)=><fieldset key={item.id} className="mt-4 border-t border-indigo-100 pt-3"><legend className="text-sm font-bold leading-6 text-slate-800">{index+1}. {item.question}</legend><div className="mt-2 grid gap-2 sm:grid-cols-2">{item.options.map((option,i)=><label key={i} className={`flex cursor-pointer items-start gap-2 rounded-lg border p-2.5 text-xs ${answers[index]===i?'border-indigo-400 bg-indigo-100':'border-slate-200 bg-white'}`}><input type="radio" name={`${lesson.id}-q${index}`} checked={answers[index]===i} onChange={()=>setAnswers(value=>({...value,[index]:i}))} className="mt-0.5 accent-indigo-600"/><span>{option}</span></label>)}</div>{result && <p className={`mt-2 text-xs ${result.review[index].correct?'text-emerald-700':'text-amber-700'}`}>{result.review[index].correct?'Correct':'Review answer'}: {item.options[result.review[index].correctAnswer]} · {result.review[index].explanation}</p>}</fieldset>)}
+    {result && <p className={`mt-3 rounded-lg p-3 text-sm font-bold ${result.passed?'bg-emerald-100 text-emerald-800':'bg-amber-100 text-amber-800'}`}>Score: {result.score}/{result.total} · {result.passed?'Passed!':'Retry after reviewing.'}</p>}
+    {error && <p role="alert" className="mt-3 text-xs text-rose-700">{error}</p>}
+    <button type="button" disabled={busy || Object.keys(answers).length < quiz.questions.length} onClick={submit} className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white disabled:opacity-40"><ListChecks size={16}/>{busy?'Checking…':'Submit quiz / Retry'}</button>
+  </div>;
+}
+
+export default function SmartLearning({ library, currentDay, onChanged, onOpenLibrary }) {
+  const courses = library?.courses || [];
+  const extras = library?.extras || [];
+  const days = library?.dayBudgets || [];
+  const [selectedDay, setSelectedDay] = useState(currentDay || 1);
+  const [form, setForm] = useState(emptyLesson);
+  const [filter, setFilter] = useState('all');
+  const [quizId, setQuizId] = useState(null);
+  const [editing, setEditing] = useState(null);
+  const [overlapPreview, setOverlapPreview] = useState([]);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const plan = days.find(day=>day.day === selectedDay) || days[0];
+  const selected = useMemo(()=>extras.filter(item=>filter==='all'||(filter==='scheduled'?item.assignedDay&&!item.skippedAt:filter==='unscheduled'?!item.assignedDay&&!item.skippedAt:Boolean(item.skippedAt))),[extras,filter]);
+  const categories = [{ id: 'auto', label: 'Detect from title' }, ...library?.skillChecklist || []];
+  const possibleDuplicates = extras.filter(item=>!item.skippedAt && item.overlaps.length).length;
+  const setField = (field,value) => setForm(f=>({...f,[field]:value}));
+  useEffect(() => {
+    let active = true;
+    const title = form.title.trim();
+    if (title.length < 4) { setOverlapPreview([]); return undefined; }
+    const timer = setTimeout(() => api(`/path/extra-lessons/overlaps?title=${encodeURIComponent(title)}`)
+      .then(result=>{ if(active) setOverlapPreview(result.matches || []); })
+      .catch(()=>{ if(active) setOverlapPreview([]); }), 350);
+    return () => { active = false; clearTimeout(timer); };
+  }, [form.title]);
+  const mutate = async work => {
+    setBusy(true); setError(''); setNotice('');
+    try { const result = await work(); setNotice(result.message || 'Saved'); await onChanged(); return true; }
+    catch(error) { setError(error.message); return false; }
+    finally { setBusy(false); }
+  };
+  const addLesson = async event => {
+    event.preventDefault();
+    const success = await mutate(()=>api('/path/extra-lessons', { method: 'POST', body: JSON.stringify({ ...form, durationMinutes: Number(form.durationMinutes), category: form.category==='auto'?undefined:form.category }) }));
+    if (success) setForm({ ...emptyLesson, courseId: form.courseId });
+  };
+  const status = async (lesson, action) => mutate(()=>api(`/path/extra-lessons/${lesson.id}/status`, {method:'POST',body:JSON.stringify({action})}));
+  const move = async (lesson, assignedDay) => mutate(()=>api(`/path/extra-lessons/${lesson.id}`, {method:'PATCH',body:JSON.stringify({assignedDay})}));
+  const watched = async lesson => mutate(()=>api(`/path/lessons/${lesson.id}/watched`,{method:'POST'}));
+  const archive = async lesson => {
+    if (!window.confirm(`Archive extra lesson "${lesson.title}"? Its quiz history is preserved.`)) return;
+    await mutate(()=>api(`/path/extra-lessons/${lesson.id}`,{method:'DELETE'}));
+  };
+  const editExtra = async event => {
+    event.preventDefault();
+    const success = await mutate(()=>api(`/path/extra-lessons/${editing.id}`, { method: 'PATCH', body: JSON.stringify({ ...editing, durationMinutes: Number(editing.durationMinutes) }) }));
+    if (success) setEditing(null);
+  };
+
+  return <div className="min-w-0 space-y-5">
+    <div className="rounded-[26px] bg-gradient-to-r from-[#182d59] via-[#354eaa] to-[#08979a] p-5 text-white sm:p-8"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-extrabold tracking-[.18em] text-cyan-200">SMART LEARNING · FREE & EXPLAINABLE</p><h3 className="mt-2 text-2xl font-black sm:text-3xl">Learn once. Build twice.</h3><p className="mt-2 max-w-2xl text-sm leading-6 text-cyan-50">Add practical videos, spot possible repeated topics, and fit extra practice into your existing 4-hour study target. Nothing automatically erases a required course video.</p></div><WandSparkles size={52} className="text-cyan-200"/></div><div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">{[[extras.length,'Extra lessons'],[extras.filter(e=>e.quizPassed).length,'Extras passed'],[possibleDuplicates,'Overlap hints']].map(([n,t])=><div key={t} className="rounded-2xl bg-white/10 p-3"><p className="text-2xl font-black">{n}</p><p className="text-xs text-indigo-100">{t}</p></div>)}</div></div>
+
+    <section className="rounded-[22px] border border-slate-200 bg-white p-4 sm:p-6"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-extrabold tracking-wider text-indigo-600">240 MINUTES TOTAL</p><h3 className="mt-1 text-xl font-extrabold text-slate-900">Your daily time budget</h3></div><label className="text-xs font-bold text-slate-500">Study day<select className={`${input} min-w-[130px]`} value={selectedDay} onChange={event=>setSelectedDay(Number(event.target.value))}>{days.map(day=><option key={day.day} value={day.day}>Day {day.day}</option>)}</select></label></div>
+      {plan && <><div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">{[[plan.videoMinutes,'Core videos','bg-indigo-50 text-indigo-700'],[plan.quizMinutes,'Quizzes','bg-amber-50 text-amber-700'],[plan.extraMinutes,'Extra practice','bg-cyan-50 text-cyan-700'],[plan.codingMinutes,'Coding/projects','bg-emerald-50 text-emerald-700'],[plan.careerMinutes,'Job preparation','bg-violet-50 text-violet-700']].map(([value,label,color])=><div key={label} className={`min-w-0 rounded-xl p-3 ${color}`}><p className="text-xl font-black">{value}m</p><p className="mt-1 text-xs font-semibold">{label}</p></div>)}</div><div className="mt-3 h-3 overflow-hidden rounded-full bg-slate-100"><div className="flex h-full">{[['bg-indigo-500',plan.videoMinutes],['bg-amber-400',plan.quizMinutes],['bg-cyan-500',plan.extraMinutes],['bg-emerald-500',plan.codingMinutes],['bg-violet-500',plan.careerMinutes]].map(([color,value])=><div key={color} className={`${color} h-full`} style={{width:`${value/240*100}%`}}/>)}</div></div><p className="mt-3 text-xs leading-5 text-slate-500"><b>{plan.extraRemainingMinutes} minutes</b> still available for extra videos on Day {plan.day}, while keeping at least 35 minutes for coding. Extras consume coding time; they never increase your daily 240-minute target.</p></>}
+    </section>
+
+    <section className="rounded-[22px] border border-slate-200 bg-white p-4 sm:p-6"><div className="flex flex-wrap items-center justify-between gap-2"><div><h3 className="text-lg font-extrabold text-slate-900">Add an extra video or topic</h3><p className="mt-1 text-xs text-slate-500">Lessons are optional and do not block your original 50-day roadmap.</p></div><PlusCircle size={25} className="text-indigo-500"/></div>
+      <form onSubmit={addLesson} className="mt-4 grid gap-3 sm:grid-cols-2"><label className="text-xs font-bold text-slate-600">From which course? *<select required className={input} value={form.courseId} onChange={event=>setField('courseId',event.target.value)}><option value="">Choose a course</option>{courses.map(course=><option key={course.id} value={course.id}>{course.title} (A{course.account})</option>)}</select></label><label className="text-xs font-bold text-slate-600">Video / topic title *<input required minLength={3} maxLength={180} className={input} value={form.title} onChange={event=>setField('title',event.target.value)} placeholder="e.g. Python Pandas groupby practice"/></label>{overlapPreview.length>0 && <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 sm:col-span-2"><p className="flex items-center gap-1 font-bold"><AlertTriangle size={14}/> Possible repeated lessons (check before adding)</p><ul className="mt-2 list-inside list-disc space-y-1">{overlapPreview.map(match=><li key={match.id}>{match.title}</li>)}</ul><p className="mt-2">This is a title-match hint, not proof the entire lecture is duplicated.</p></div>}<label className="text-xs font-bold text-slate-600">Duration in minutes *<input type="number" required min="1" max="180" className={input} value={form.durationMinutes} onChange={event=>setField('durationMinutes',event.target.value)}/></label><label className="text-xs font-bold text-slate-600">Skill category<select className={input} value={form.category} onChange={event=>setField('category',event.target.value)}>{categories.map(item=><option key={item.id} value={item.id}>{item.label}</option>)}</select></label><label className="text-xs font-bold text-slate-600 sm:col-span-2">Direct Udemy lecture link (optional)<input type="url" className={input} value={form.videoUrl} onChange={event=>setField('videoUrl',event.target.value)} placeholder="https://www.udemy.com/course/.../learn/lecture/..."/></label><label className="text-xs font-bold text-slate-600 sm:col-span-2">Practice task (optional)<textarea rows={2} maxLength={500} className={input} value={form.practiceTask} onChange={event=>setField('practiceTask',event.target.value)} placeholder="Write a Python example; push to GitHub"/></label><label className="text-xs font-bold text-slate-600 sm:col-span-2">Schedule<select className={input} value={form.assignedDay} onChange={event=>setField('assignedDay',event.target.value)}><option value="auto">Auto-fit into next day with enough time (recommended)</option><option value="none">Add to library only (no day yet)</option>{days.map(day=><option key={day.day} value={day.day}>Day {day.day} · {day.extraRemainingMinutes} min free for extras</option>)}</select></label><button disabled={busy} type="submit" className="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white hover:bg-indigo-700 disabled:opacity-50 sm:col-span-2"><PlusCircle size={18}/>{busy?'Saving…':'Save extra learning'}</button></form><button type="button" onClick={onOpenLibrary} className="mt-3 flex items-center gap-1 text-xs font-bold text-indigo-700">Need a course first? Open My Course Library <ArrowRight size={14}/></button>
+    </section>
+
+    <section className="rounded-[22px] border border-slate-200 bg-white p-4 sm:p-6"><div className="flex flex-wrap items-center justify-between gap-2"><h3 className="text-lg font-extrabold text-slate-900">Your extra lesson queue</h3><div className="flex flex-wrap gap-1.5">{[['all','All'],['scheduled','Planned'],['unscheduled','Library'],['skipped','Skipped']].map(([key,label])=><button key={key} type="button" onClick={()=>setFilter(key)} className={`rounded-full px-3 py-1.5 text-xs font-bold ${filter===key?'bg-indigo-600 text-white':'bg-slate-100 text-slate-600'}`}>{label}</button>)}</div></div>
+      <div className="mt-4 space-y-3">{selected.map(item=><article key={item.id} className={`min-w-0 rounded-2xl border p-4 ${item.skippedAt?'border-slate-200 bg-slate-50 opacity-80':'border-slate-200 bg-white'}`}><div className="flex flex-wrap items-start justify-between gap-2"><div className="min-w-0 flex-1"><div className="flex flex-wrap gap-1.5"><span className="rounded-full bg-indigo-50 px-2.5 py-1 text-[11px] font-bold text-indigo-700">{item.category}</span><span className="rounded-full bg-cyan-50 px-2.5 py-1 text-[11px] font-bold text-cyan-700"><Clock3 size={12} className="mr-1 inline"/>{item.durationMinutes}m</span>{item.quizPassed && <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700">Quiz passed</span>}{item.skippedAt && <span className="rounded-full bg-slate-200 px-2.5 py-1 text-[11px] font-bold text-slate-600">Skipped</span>}</div><h4 className="mt-2 text-base font-extrabold text-slate-900">{item.title}</h4><p className="mt-1 text-xs text-slate-500">{item.courseTitle}</p></div><div className="flex shrink-0 gap-1"><button type="button" title="Edit this extra" onClick={()=>setEditing({ id:item.id, title:item.title, durationMinutes:item.durationMinutes, category:item.category, videoUrl:item.videoUrl||'', practiceTask:item.practiceTask||'' })} className="rounded-lg p-2 text-indigo-600 hover:bg-indigo-50"><Pencil size={17}/></button><button type="button" title="Archive this extra" disabled={busy} onClick={()=>archive(item)} className="rounded-lg p-2 text-rose-500 hover:bg-rose-50"><Trash2 size={17}/></button></div></div>
+        {editing?.id===item.id && <form onSubmit={editExtra} className="mt-3 grid gap-3 rounded-xl bg-indigo-50 p-3 sm:grid-cols-2"><label className="text-xs font-bold text-slate-600 sm:col-span-2">Topic title<input required minLength={3} maxLength={180} className={input} value={editing.title} onChange={event=>setEditing(f=>({...f,title:event.target.value}))}/></label><label className="text-xs font-bold text-slate-600">Minutes<input type="number" min="1" max="180" required className={input} value={editing.durationMinutes} onChange={event=>setEditing(f=>({...f,durationMinutes:event.target.value}))}/></label><label className="text-xs font-bold text-slate-600">Skill area<select className={input} value={editing.category} onChange={event=>setEditing(f=>({...f,category:event.target.value}))}>{[{id:'general',label:'General'},...(library?.skillChecklist||[])].map(s=><option key={s.id} value={s.id}>{s.label}</option>)}</select></label><label className="text-xs font-bold text-slate-600 sm:col-span-2">Udemy URL<input type="url" className={input} value={editing.videoUrl} onChange={event=>setEditing(f=>({...f,videoUrl:event.target.value}))}/></label><label className="text-xs font-bold text-slate-600 sm:col-span-2">Practice task<textarea maxLength={500} rows={2} className={input} value={editing.practiceTask} onChange={event=>setEditing(f=>({...f,practiceTask:event.target.value}))}/></label><button type="submit" disabled={busy} className="rounded-xl bg-indigo-600 p-3 text-sm font-bold text-white disabled:opacity-50">Save changes</button><button type="button" onClick={()=>setEditing(null)} className="rounded-xl border border-slate-200 bg-white p-3 text-sm font-bold text-slate-600">Cancel</button></form>}
+        {item.overlaps?.length>0 && <div className="mt-3 rounded-xl border border-amber-100 bg-amber-50 p-3"><p className="flex items-center gap-1.5 text-xs font-extrabold text-amber-800"><AlertTriangle size={15}/>Possible overlap — review before repeating</p><ul className="mt-1 list-inside list-disc space-y-1 text-xs leading-5 text-amber-800">{item.overlaps.map(match=><li key={match.id}>{match.title}{match.course ? ` · ${match.course}` : ''}</li>)}</ul><p className="mt-2 text-[11px] text-amber-700">Title-based similarity is only a hint. You decide whether this lesson is new, revision or worth skipping.</p></div>}
+        {item.practiceTask && <p className="mt-3 rounded-xl bg-emerald-50 p-3 text-xs leading-5 text-emerald-800"><Code2 size={14} className="mr-1 inline"/><b>Hands-on:</b> {item.practiceTask}</p>}
+        <div className="mt-3 flex flex-wrap items-end gap-2"><label className="min-w-[140px] flex-1 text-xs font-bold text-slate-500">Assigned day<select disabled={busy||Boolean(item.skippedAt)} value={item.assignedDay || 'none'} onChange={event=>move(item,event.target.value)} className={input}><option value="none">Library only</option><option value="auto">Auto-fit next available</option>{days.map(day=><option key={day.day} value={day.day}>Day {day.day}</option>)}</select></label><div className="flex flex-wrap gap-2">{!item.skippedAt && <><button type="button" disabled={!item.videoUrl && !courses.some(c=>c.id===item.courseId&&(c.url||c.courseUrl))} onClick={()=>window.open(item.videoUrl || courses.find(c=>c.id===item.courseId)?.url || courses.find(c=>c.id===item.courseId)?.courseUrl,'_blank','noopener,noreferrer')} className="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-3 text-xs font-bold text-white disabled:opacity-40"><Play size={14}/>Watch Udemy <ExternalLink size={12}/></button><button type="button" disabled={busy||item.watched} onClick={()=>watched(item)} className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-3 text-xs font-bold text-emerald-800 disabled:opacity-50"><CheckCircle2 size={14}/>{item.watched?'Watched':'Mark watched'}</button></>}<button type="button" disabled={busy} onClick={()=>status(item,item.skippedAt?'restore':'skip')} className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-3 text-xs font-bold text-slate-600 hover:bg-slate-50">{item.skippedAt?<RotateCcw size={14}/>:<SkipForward size={14}/>} {item.skippedAt?'Restore':'Skip repeat'}</button></div></div>
+        {item.watched && !item.skippedAt && <><button type="button" onClick={()=>setQuizId(quizId===item.id?null:item.id)} className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-indigo-700"><ListChecks size={15}/>{quizId===item.id?'Hide quiz':'Take 5-question test'}</button>{quizId===item.id && <ExtraQuiz lesson={item} onChanged={onChanged}/>}</>}
+      </article>)}</div>{!selected.length && <div className="rounded-xl bg-slate-50 p-7 text-center"><BookOpen className="mx-auto text-indigo-400"/><p className="mt-2 text-sm font-bold text-slate-700">No extra lessons here yet</p><p className="mt-1 text-xs text-slate-500">Add specific lectures from the other Udemy courses. Your core path remains unchanged.</p></div>}
+      {error && <p role="alert" className="mt-4 rounded-xl bg-rose-50 p-3 text-sm text-rose-700">{error}</p>}{notice && <p role="status" className="mt-4 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">{notice}</p>}
+    </section>
+
+    <section className="rounded-[22px] border border-slate-200 bg-white p-4 sm:p-6"><div className="flex items-center gap-2"><Sparkles size={20} className="text-indigo-500"/><h3 className="text-lg font-extrabold text-slate-900">Job-ready skills checklist</h3></div><p className="mt-2 text-xs leading-5 text-slate-500">Counts use tracked lesson titles and recorded quizzes; they do not certify mastery or automatically verify project code. Fill any gaps with targeted lessons and real portfolio projects.</p><div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{(library?.skillChecklist || []).map(item=><article key={item.id} className="rounded-xl border border-slate-200 bg-slate-50/80 p-4"><div className="flex items-center justify-between gap-2"><h4 className="text-sm font-extrabold text-slate-900">{item.label}</h4><span className={`rounded-full px-2 py-1 text-[10px] font-bold ${item.trackedLessons?'bg-indigo-100 text-indigo-700':'bg-amber-100 text-amber-800'}`}>{item.trackedLessons?'TRACKED':'ADD PRACTICE'}</span></div><p className="mt-1 text-xs leading-5 text-slate-500">{item.hint}</p><p className="mt-3 text-sm font-bold text-indigo-700">{item.quizzesPassed} quizzes passed / {item.trackedLessons} lessons</p><div className="mt-2 h-2 rounded-full bg-slate-200"><div className="h-full rounded-full bg-indigo-500" style={{width:`${item.trackedLessons?item.quizzesPassed/item.trackedLessons*100:0}%`}}/></div></article>)}</div><p className="mt-4 flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-xs leading-5 text-amber-800"><Lightbulb className="mt-0.5 shrink-0" size={15}/>Python and SQL foundations plus a deployed, tested GitHub project are worth checking even if your LLM courses are complete.</p></section>
+  </div>;
+}
