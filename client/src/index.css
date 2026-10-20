@@ -28,3 +28,7 @@ main,section,article{min-width:0;overflow-wrap:anywhere}
   .portal-orb{max-width:70vw}
 }
 @media(prefers-reduced-motion:reduce){.portal-orb,.portal-card,.portal-card-shine{animation:none;transition:none}}
+
+.portal-card-english{background:radial-gradient(circle at 92% 10%,rgba(16,185,129,.16),transparent 37%),linear-gradient(155deg,rgba(18,49,55,.94),rgba(10,25,39,.97))}
+.portal-card-english:hover{border-color:#34d399}
+.portal-icon-english{color:#9ff5d0;background:linear-gradient(145deg,#11664e,#173a45);border:1px solid #34d39977}
