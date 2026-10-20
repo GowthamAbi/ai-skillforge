@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, ArrowRight, BookOpen, BrainCircuit, GraduationCap, Sparkles, Zap } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, BrainCircuit, GraduationCap, Languages, Sparkles, Zap } from 'lucide-react';
 import LegacyApp from './LegacyApp';
 import EngineerPath from './pages/EngineerPath';
+import EnglishSpeaking from './pages/EnglishSpeaking';
 
 function readView() {
   const path = window.location.hash.replace(/^#\/?/, '').split('/')[0];
-  return ['old', 'path'].includes(path) ? path : 'home';
+  return ['old', 'path', 'english'].includes(path) ? path : 'home';
 }
 
 function Landing({ navigate }) {
@@ -22,10 +23,10 @@ function Landing({ navigate }) {
         </header>
         <div className="mx-auto mb-8 max-w-3xl text-center sm:mb-11">
           <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-indigo-400/30 bg-indigo-500/10 px-4 py-2 text-xs font-semibold tracking-widest text-indigo-200"><Zap size={14} /> CHOOSE YOUR JOURNEY</div>
-          <h1 className="text-3xl font-black leading-tight tracking-tight sm:text-6xl">One place. <span className="portal-gradient-text">Two ways to grow.</span></h1>
-          <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-slate-400 sm:mt-6 sm:text-lg">Continue the roadmap you already know, or enter your new video-by-video AI Engineer learning experience.</p>
+          <h1 className="text-3xl font-black leading-tight tracking-tight sm:text-6xl">One place. <span className="portal-gradient-text">Three ways to grow.</span></h1>
+          <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-slate-400 sm:mt-6 sm:text-lg">Continue your existing roadmap, explore the AI Engineer path, or build confidence with English speaking practice.</p>
         </div>
-        <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
+        <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 md:gap-6">
           <button type="button" onClick={() => navigate('old')} className="portal-card portal-card-old group text-left">
             <span className="portal-card-shine" aria-hidden="true" />
             <span className="portal-icon portal-icon-cyan"><BookOpen size={35} strokeWidth={1.65}/></span>
@@ -42,6 +43,15 @@ function Landing({ navigate }) {
             <span className="mt-3 block text-3xl font-bold">AI Engineer Path</span>
             <span className="mt-3 block max-w-sm text-sm leading-7 text-slate-400">Exact course lessons, Udemy links, free quizzes, 4-hour focus sessions, GitHub projects and career milestones.</span>
             <span className="mt-9 flex items-center justify-between border-t border-white/10 pt-5 text-sm font-bold text-indigo-200">Start learning <ArrowRight className="transition-transform group-hover:translate-x-1" size={20}/></span>
+          </button>
+          <button type="button" onClick={() => navigate('english')} className="portal-card portal-card-english group text-left">
+            <span className="portal-card-shine" aria-hidden="true" />
+            <span className="absolute right-6 top-6 inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-3 py-1.5 text-[11px] font-bold text-emerald-200"><Sparkles size={12}/> NEW</span>
+            <span className="portal-icon portal-icon-english"><Languages size={38} strokeWidth={1.65}/></span>
+            <span className="mt-7 block text-xs font-bold tracking-[.22em] text-emerald-300">03 · SPEAK WITH CONFIDENCE</span>
+            <span className="mt-3 block text-3xl font-bold">English Speaking</span>
+            <span className="mt-3 block max-w-sm text-sm leading-7 text-slate-400">Speaking practice, Tamil ↔ English, vocabulary, daily tests and weekly/monthly progress.</span>
+            <span className="mt-9 flex items-center justify-between border-t border-white/10 pt-5 text-sm font-bold text-emerald-200">Open speaking coach <ArrowRight className="transition-transform group-hover:translate-x-1" size={20}/></span>
           </button>
         </div>
         <footer className="mt-8 flex items-center justify-center gap-2 text-center text-xs text-slate-500 sm:mt-12 sm:text-sm"><GraduationCap className="shrink-0" size={17}/> Built for your AI Engineer journey · 4 hours a day</footer>
@@ -65,6 +75,6 @@ export default function App() {
   if (view === 'home') return <Landing navigate={navigate}/>;
   return <>
     <button type="button" onClick={() => navigate('home')} className="mobile-safe-bottom fixed bottom-2 right-3 z-50 flex items-center gap-2 rounded-full border border-white/20 bg-[#111b32] px-4 pt-3 text-xs font-bold text-white shadow-2xl transition hover:bg-indigo-600 sm:bottom-4 sm:right-4" aria-label="Switch between Old and New learning dashboards"><ArrowLeft size={15}/> Switch mode</button>
-    {view === 'old' ? <LegacyApp/> : <EngineerPath/>}
+    {view === 'old' ? <LegacyApp/> : view === 'path' ? <EngineerPath/> : <EnglishSpeaking/>}
   </>;
 }
