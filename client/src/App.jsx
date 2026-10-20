@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, ArrowRight, BookOpen, BrainCircuit, GraduationCap, Sparkles, Zap } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, BrainCircuit, GraduationCap, Languages, Sparkles, Zap } from 'lucide-react';
 import LegacyApp from './LegacyApp';
 import EngineerPath from './pages/EngineerPath';
 import EnglishSpeaking from './pages/EnglishSpeaking';
