@@ -79,9 +79,9 @@ export default function AIRoadmap() {
     } finally { setLoaded(true); }
   }, []);
   useEffect(() => { load(); }, [load]);
-  useEffect(() => { if (topic) setCode('# Topic: ' + topic.title + '\\n# Write a small example that demonstrates this concept.\\n\\ndef main():\\n    # TODO: implement and test this concept\\n    pass\\n\\nif __name__ == "__main__":\\n    main()'); }, [selectedId]);
 
   const topic = allTopics.find(item => item.id === selectedId) || allTopics[0];
+  useEffect(() => { if (topic) setCode(['# Topic: ' + topic.title, '# Write a small example that demonstrates this concept.', '', 'def main():', '    # TODO: implement and test this concept', '    pass', '', 'if __name__ == "__main__":', '    main()'].join(String.fromCharCode(10))); }, [selectedId]);
   const topicRecord = topic ? getTopicRecord(progress, topic.id) : {completedStages:[],completed:false};
   const allDone = allTopics.filter(t => getTopicRecord(progress,t.id).completed).length;
   const overallPct = pct(allDone, allTopics.length);
