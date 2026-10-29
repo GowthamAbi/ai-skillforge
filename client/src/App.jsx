@@ -97,7 +97,7 @@ export default function App() {
   if (view === 'home') return <><LanguageSwitcher/><Landing navigate={navigate} t={t}/></>;
   return <>
     <LanguageSwitcher/>
-    <button type="button" onClick={() => navigate('home') className="mobile-safe-bottom fixed bottom-2 right-3 z-50 flex items-center gap-2 rounded-full border border-white/20 bg-[#111b32] px-4 pt-3 text-xs font-bold text-white shadow-2xl transition hover:bg-indigo-600 sm:bottom-4 sm:right-4" aria-label={t('switch.mode')}><ArrowLeft size={15}/> {t('switch.mode')}</button>
+    <button type="button" onClick={() => navigate('home')} className="mobile-safe-bottom fixed bottom-2 right-3 z-50 flex items-center gap-2 rounded-full border border-white/20 bg-[#111b32] px-4 pt-3 text-xs font-bold text-white shadow-2xl transition hover:bg-indigo-600 sm:bottom-4 sm:right-4" aria-label={t('switch.mode')}><ArrowLeft size={15}/> {t('switch.mode')}</button>
     {view === 'old' ? <LegacyApp/> : view === 'path' ? <EngineerPath/> : view === 'roadmap' ? <AIRoadmap/> : <EnglishSpeaking/>}
   </>;
 }
