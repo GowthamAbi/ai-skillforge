@@ -27,7 +27,7 @@ function Landing({ navigate }) {
           <h1 className="text-3xl font-black leading-tight tracking-tight sm:text-6xl">One place. <span className="portal-gradient-text">Four ways to grow.</span></h1>
           <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-slate-400 sm:mt-6 sm:text-lg">Continue your existing roadmap, explore the AI Engineer path, learn the full AI syllabus topic-by-topic, or practise English speaking.</p>
         </div>
-        <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 md:gap-6">
+        <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4 md:gap-6">
           <button type="button" onClick={() => navigate('old')} className="portal-card portal-card-old group text-left">
             <span className="portal-card-shine" aria-hidden="true" />
             <span className="portal-icon portal-icon-cyan"><BookOpen size={35} strokeWidth={1.65}/></span>
