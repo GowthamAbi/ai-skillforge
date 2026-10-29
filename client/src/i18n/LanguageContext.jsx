@@ -77,6 +77,38 @@ const uiPairs = [
   ['Add','சேர்'], ['Create','உருவாக்கு'], ['Submit','சமர்ப்பி'], ['Refresh','புதுப்பி'],
   ['Tamil','தமிழ்'], ['English','ஆங்கிலம்'], ['Language','மொழி']
 ];
+uiPairs.push(
+
+  // Phrases used by the AI Roadmap lessons (the roadmap content is authored in Tamil).
+  ['நிமிடங்கள்','minutes'], ['தமிழில்','in Tamil'], ['முதலில்','First'], ['பின்னர்','then'],
+  ['உதாரணம்','Example'], ['இந்த topic-ஐ','this topic'], ['இந்த topic-ல்','in this topic'],
+  ['சிறிய','small'], ['புரிந்துகொள்ளுங்கள்','understand'], ['புரிந்துகொண்டு','understand and'],
+  ['முயற்சி செய்து','try'], ['மாற்றிப் பாருங்கள்','try changing it'], ['கற்றுக்கொள்ளுங்கள்','learn'],
+  ['கணக்கிடுங்கள்','calculate'], ['கணக்கிடுதல்','calculation'], ['பாருங்கள்','see'], ['செய்யுங்கள்','do'],
+  ['உங்கள்','your'], ['மற்றும்','and'], ['என்ன','what'], ['எப்படி','how'], ['எந்த','which'],
+  ['எண்ண','number'], ['எண்ணிக்கை','quantity'], ['நேரம்','time'], ['முன்னேற்றம்','progress'],
+  ['முடிக்கப்பட்டது','completed'], ['முடிக்கவும்','complete'], ['முடிக்க','to complete'],
+  ['தலைப்புகள்','topics'], ['தலைப்பு','topic'], ['பாடம்','lesson'], ['பாடங்கள்','lessons'],
+  ['கற்றல் நிலைகள்','learning stages'], ['நிலைகள் முடிந்தன','stages completed'],
+  ['மொத்தம்','overall'], ['முடிந்தது','completed'], ['இன்னும்','still'],
+  ['இன்றைய','today’s'], ['தினசரி','daily'], ['வார','weekly'], ['மாத','monthly'],
+  ['சரிபார்க்கவும்','check'], ['மீண்டும் முயற்சிக்கவும்','try again'], ['வெளியீடு','output'],
+  ['புரிந்துகொண்டு','understand'], ['எடுத்துக்கொண்டு','using'], ['எடுத்துக்காட்டுடன்','with an example'],
+  ['எளிய','easy'], ['நடைமுறை','practical'], ['சிக்கலைத் தீர்க்கும்','problem-solving'],
+  ['குறியீடு','code'], ['கற்றல்','learning'], ['பயிற்சி','practice'], ['மீள்பார்வை','revision'],
+  ['வினாடி வினா','quiz'], ['மதிப்பீடு','assessment'], ['கருத்து','feedback'],
+  ['இணைப்புகள்','links'], ['அடிப்படை','basics'], ['முக்கிய','important'],
+  ['தொடங்கவும்','start'], ['தொடரவும்','continue'], ['திறக்கவும்','open'],
+  ['சரியாக','correctly'], ['தவறுகள்','mistakes'], ['தவறு','mistake'],
+  ['கேள்விகள்','questions'], ['பதில்கள்','answers'], ['பதில்','answer'],
+  ['முயற்சி','attempt'], ['மாற்றம்','change'], ['மாதிரி','example'], ['விளக்குங்கள்','explain'],
+  ['உள்ளீடு','input'], ['வெளியீடு','output'], ['நிரல்','program'], ['முடிவுகள்','results'],
+  ['இந்த topic-ஐ முதலில் சிறிய input/output உதாரணத்துடன் புரிந்துகொண்டு, பின்னர் code-ஐ மாற்றிப் பாருங்கள்.','First understand this topic with a small input/output example, then try modifying the code.'],
+  ['இந்த topic-ஐ உண்மையாகப் புரிந்துகொள்ள சிறந்த வழி எது?','What is the best way to truly understand this topic?'],
+  ['இந்த topic-ல் சிறிய input/output உதாரணத்துடன் புரிந்துகொண்டு, பின்னர் code-ஐ மாற்றிப் பாருங்கள்.','Understand this topic with a small input/output example, then try modifying the code.'],
+
+);
+uiPairs.sort((a, b) => b[0].length - a[0].length);
 const enToTa = new Map(uiPairs);
 const taToEn = new Map(uiPairs.map(([en, ta]) => [ta, en]));
 const originalTextNodes = new WeakMap();
@@ -94,8 +126,20 @@ function translateDom(root, language) {
     originalTextNodes.set(node, original);
     const trimmed = original.trim();
     if (!trimmed) continue;
-    const translated = dictionary.get(trimmed);
-    const next = translated ? original.replace(trimmed, translated) : original;
+    let next = original;
+    if (language === 'ta') {
+      const exact = enToTa.get(trimmed);
+      if (exact) next = original.replace(trimmed, exact);
+    } else {
+      const exact = taToEn.get(trimmed);
+      if (exact) next = original.replace(trimmed, exact);
+      else {
+        // Translate known Tamil phrases inside mixed Tamil/English text nodes too.
+        for (const [tamil, english] of uiPairs) {
+          if (/[\\u0B80-\\u0BFF]/.test(tamil) && next.includes(tamil)) next = next.split(tamil).join(english);
+        }
+      }
+    }
     if (node.nodeValue !== next) node.nodeValue = next;
   }
   root.querySelectorAll('[placeholder],[aria-label],[title]').forEach((el) => {
