@@ -21,6 +21,8 @@ jobs:
           node --check routes/api.js
           node --check routes/studyPlan.js
           node --check routes/notifications.js
+          node --check routes/engineerPath.js
+          node --check models/EngineerJourney.js
           node --check services/notifications.js
       - name: Build frontend
         working-directory: client
