@@ -153,3 +153,29 @@ reliable scheduled worker and recipient preference.
 
 Run `node --test server/tests/*.test.js` and `cd client && npm run build`
 when dependencies have been installed.
+
+
+## Full AI Roadmap (new feature branch)
+
+The **AI Roadmap** portal is available at `/#/roadmap` and is separate from Old SkillForge and the existing 50-day AI Engineer Path. It follows the uploaded seven-phase syllabus: Programming Foundations, Machine Learning, Deep Learning, NLP, Generative AI, AI Engineering, and Advanced Specialization / Capstone.
+
+- Sidebar hierarchy: phase → main heading → subheading → individual topic.
+- Dashboard: overall completion, completed / pending topics, and phase-level percentages.
+- Each topic page has four learning stages: concept learning, coding practice, task/problem solving, and revision/assessment.
+- Topic progress is stored in the existing `EngineerJourney.aiRoadmapProgress` MongoDB field through `GET /api/path/roadmap-progress` and `PATCH /api/path/roadmap-progress/:topicId`.
+- Existing course/video progress collections are retained. No migration or data reset is needed for this additive field.
+- The page currently supplies a guided study scaffold and a general checkpoint quiz. It does **not** yet provide a fully authored Tamil theory article, tailored runnable code/output, or a unique subject quiz for every single topic; those lesson contents should be authored in subsequent iterations.
+- The current backend is a single-learner prototype without authentication. Do not expose it to multiple users until authentication, authorization and per-user progress isolation are implemented.
+
+### Verify before deploying
+
+Run from the repository root after installing dependencies:
+
+```bash
+npm ci --prefix client
+npm run build --prefix client
+npm ci --prefix server
+node --test server/tests/*.test.js
+```
+
+Deploy the updated backend before the Netlify frontend, then verify `GET /api/path/roadmap-progress` returns a `progress` object and test saving a topic stage.
