@@ -43,6 +43,73 @@ const translations = {
   }
 };
 
+
+const uiPairs = [
+  ['Dashboard','டாஷ்போர்டு'], ['Overview','மேலோட்டம்'], ['Home','முகப்பு'],
+  ['Roadmap','கற்றல் திட்டம்'], ['50-Day Roadmap','50 நாள் கற்றல் திட்டம்'],
+  ["Today's Timetable",'இன்றைய கால அட்டவணை'], ['Tasks','பணிகள்'],
+  ['Analytics','பகுப்பாய்வு'], ['Progress','முன்னேற்றம்'], ['Settings','அமைப்புகள்'],
+  ['Profile','சுயவிவரம்'], ['Logout','வெளியேறு'], ['Log out','வெளியேறு'],
+  ['Save','சேமி'], ['Cancel','ரத்து செய்'], ['Close','மூடு'], ['Back','பின்னால்'],
+  ['Next','அடுத்து'], ['Previous','முந்தையது'], ['Continue','தொடரவும்'],
+  ['Start','தொடங்கு'], ['Start learning','கற்றலைத் தொடங்கு'], ['Start Learning','கற்றலைத் தொடங்கு'],
+  ['Complete','நிறைவு செய்'], ['Completed','முடிக்கப்பட்டது'], ['Mark complete','முடிந்ததாகக் குறி'],
+  ['Search','தேடு'], ['Search courses','பாடங்களைத் தேடு'], ['Filter','வடிகட்டு'],
+  ['All','அனைத்தும்'], ['Today','இன்று'], ['Daily','தினசரி'], ['Weekly','வாரந்தோறும்'],
+  ['Monthly','மாதந்தோறும்'], ['Day','நாள்'], ['Week','வாரம்'], ['Month','மாதம்'],
+  ['Learning','கற்றல்'], ['Lessons','பாடங்கள்'], ['Lesson','பாடம்'], ['Practice','பயிற்சி'],
+  ['Quiz','வினாடி வினா'], ['Take quiz','வினாடி வினாவைத் தொடங்கு'], ['Projects','திட்டப்பணிகள்'],
+  ['Project','திட்டப்பணி'], ['Skills','திறன்கள்'], ['Skill progress','திறன் முன்னேற்றம்'],
+  ['Your progress','உங்கள் முன்னேற்றம்'], ['Study time','படிப்பு நேரம்'], ['Study plan','படிப்புத் திட்டம்'],
+  ['Daily tasks','தினசரி பணிகள்'], ['Daily goal','தினசரி இலக்கு'], ['Achievements','சாதனைகள்'],
+  ['Certificates','சான்றிதழ்கள்'], ['Notifications','அறிவிப்புகள்'], ['Help','உதவி'],
+  ['English Speaking','ஆங்கிலப் பேச்சுப் பயிற்சி'], ['AI Engineer Path','AI Engineer கற்றல் பாதை'],
+  ['AI Roadmap','AI கற்றல் திட்டம்'], ['Old SkillForge','பழைய SkillForge'],
+  ['Open full roadmap','முழு கற்றல் திட்டத்தைத் திற'], ['Switch dashboard','டாஷ்போர்டை மாற்று'],
+  ['Welcome back','மீண்டும் வரவேற்கிறோம்'], ['Your learning journey','உங்கள் கற்றல் பயணம்'],
+  ['Choose your journey','உங்கள் கற்றல் பயணத்தைத் தேர்ந்தெடுக்கவும்'],
+  ['Start speaking','பேசத் தொடங்குங்கள்'], ['Speaking practice','பேச்சுப் பயிற்சி'],
+  ['Vocabulary','சொற்களஞ்சியம்'], ['Grammar','இலக்கணம்'], ['Listening','கேட்டல் பயிற்சி'],
+  ['Speaking','பேச்சுப் பயிற்சி'], ['Revision','மீள்பார்வை'], ['Feedback','கருத்து'],
+  ['Loading...','ஏற்றப்படுகிறது...'], ['Loading','ஏற்றப்படுகிறது'], ['Try again','மீண்டும் முயற்சி செய்'],
+  ['No data available','தரவு எதுவும் இல்லை'], ['View details','விவரங்களைக் காண்க'],
+  ['Learn more','மேலும் அறிக'], ['Open','திற'], ['Edit','திருத்து'], ['Delete','நீக்கு'],
+  ['Add','சேர்'], ['Create','உருவாக்கு'], ['Submit','சமர்ப்பி'], ['Refresh','புதுப்பி'],
+  ['Tamil','தமிழ்'], ['English','ஆங்கிலம்'], ['Language','மொழி']
+];
+const enToTa = new Map(uiPairs);
+const taToEn = new Map(uiPairs.map(([en, ta]) => [ta, en]));
+const originalTextNodes = new WeakMap();
+const originalAttributes = new WeakMap();
+
+function translateDom(root, language) {
+  if (!root) return;
+  const dictionary = language === 'ta' ? enToTa : taToEn;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  let node;
+  while ((node = walker.nextNode())) {
+    const parent = node.parentElement;
+    if (!parent || parent.closest('script,style,noscript,textarea,code,pre,input,option')) continue;
+    const original = originalTextNodes.has(node) ? originalTextNodes.get(node) : node.nodeValue;
+    originalTextNodes.set(node, original);
+    const trimmed = original.trim();
+    if (!trimmed) continue;
+    const translated = dictionary.get(trimmed);
+    const next = translated ? original.replace(trimmed, translated) : original;
+    if (node.nodeValue !== next) node.nodeValue = next;
+  }
+  root.querySelectorAll('[placeholder],[aria-label],[title]').forEach((el) => {
+    ['placeholder','aria-label','title'].forEach((attr) => {
+      if (!el.hasAttribute(attr)) return;
+      let values = originalAttributes.get(el);
+      if (!values) { values = {}; originalAttributes.set(el, values); }
+      if (!(attr in values)) values[attr] = el.getAttribute(attr);
+      const original = values[attr];
+      el.setAttribute(attr, dictionary.get(original) || original);
+    });
+  });
+}
+
 const LanguageContext = createContext(null);
 
 export function LanguageProvider({ children }) {
@@ -54,6 +121,19 @@ export function LanguageProvider({ children }) {
   useEffect(() => {
     try { localStorage.setItem('ai-skillforge-language', language); } catch {}
     document.documentElement.lang = language === 'ta' ? 'ta' : 'en';
+    let queued = false;
+    const run = () => {
+      queued = false;
+      translateDom(document.body, language);
+    };
+    run();
+    const observer = new MutationObserver(() => {
+      if (queued) return;
+      queued = true;
+      queueMicrotask(run);
+    });
+    observer.observe(document.body, { subtree: true, childList: true, characterData: true });
+    return () => observer.disconnect();
   }, [language]);
 
   const value = useMemo(() => ({
