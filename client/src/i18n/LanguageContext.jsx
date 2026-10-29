@@ -140,6 +140,7 @@ function translateDom(root, language) {
         }
       }
     }
+    next = next.replace(/[\u0B80-\u0BFF]/g, '').replace(/\s{2,}/g, ' ').trim();
     if (node.nodeValue !== next) node.nodeValue = next;
   }
   root.querySelectorAll('[placeholder],[aria-label],[title]').forEach((el) => {
