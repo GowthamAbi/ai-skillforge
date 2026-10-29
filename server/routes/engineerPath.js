@@ -110,6 +110,43 @@ function serialize(state) {
   };
 }
 
+router.get('/roadmap-progress', asyncRoute(async (_req, res) => {
+  const state = await findJourney();
+  const progress = Object.fromEntries(state.aiRoadmapProgress.map(item => [item.topicId, {
+    topicId: item.topicId,
+    completedStages: item.completedStages,
+    completed: item.completed,
+    completedAt: item.completedAt || null,
+    updatedAt: item.updatedAt
+  }]));
+  res.json({ progress });
+}));
+
+router.patch('/roadmap-progress/:topicId', asyncRoute(async (req, res) => {
+  const topicId = String(req.params.topicId || '').trim();
+  const completedStages = req.body?.completedStages;
+  if (!topicId || topicId.length > 300) return res.status(400).json({ error: 'Invalid topic ID' });
+  const allowedStages = ['concept', 'coding', 'task', 'revision'];
+  if (!Array.isArray(completedStages) || completedStages.some(stage => !allowedStages.includes(stage))) {
+    return res.status(400).json({ error: 'completedStages must contain valid learning stages' });
+  }
+  const uniqueStages = [...new Set(completedStages)];
+  const completed = req.body?.completed === true && allowedStages.every(stage => uniqueStages.includes(stage));
+  const state = await findJourney();
+  let record = state.aiRoadmapProgress.find(item => item.topicId === topicId);
+  if (!record) {
+    state.aiRoadmapProgress.push({ topicId, completedStages: uniqueStages, completed, completedAt: completed ? new Date() : null, updatedAt: new Date() });
+    record = state.aiRoadmapProgress.find(item => item.topicId === topicId);
+  } else {
+    record.completedStages = uniqueStages;
+    record.completed = completed;
+    record.completedAt = completed ? (record.completedAt || new Date()) : null;
+    record.updatedAt = new Date();
+  }
+  await state.save();
+  res.json({ record: { topicId: record.topicId, completedStages: record.completedStages, completed: record.completed, completedAt: record.completedAt || null, updatedAt: record.updatedAt }, message: completed ? 'Topic completion saved.' : 'Learning progress saved.' });
+}));
+
 router.get('/dashboard', async (_req, res) => {
   try { res.json(serialize(await findJourney())); }
   catch (error) { res.status(500).json({ error: error.message || 'Learning path could not load' }); }
