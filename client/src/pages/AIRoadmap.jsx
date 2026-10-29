@@ -79,7 +79,7 @@ export default function AIRoadmap() {
     } finally { setLoaded(true); }
   }, []);
   useEffect(() => { load(); }, [load]);
-  useEffect(() => { if (topic) setCode(`# Topic: ${topic.title}\n# Write a small example that demonstrates this concept.\n\ndef main():\n    # TODO: implement and test this concept\n    pass\n\nif __name__ == "__main__":\n    main()\`); }, [selectedId]);
+  useEffect(() => { if (topic) setCode('# Topic: ' + topic.title + '\\n# Write a small example that demonstrates this concept.\\n\\ndef main():\\n    # TODO: implement and test this concept\\n    pass\\n\\nif __name__ == "__main__":\\n    main()'); }, [selectedId]);
 
   const topic = allTopics.find(item => item.id === selectedId) || allTopics[0];
   const topicRecord = topic ? getTopicRecord(progress, topic.id) : {completedStages:[],completed:false};
