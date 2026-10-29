@@ -149,7 +149,7 @@ function translateDom(root, language) {
       if (!values) { values = {}; originalAttributes.set(el, values); }
       if (!(attr in values)) values[attr] = el.getAttribute(attr);
       const original = values[attr];
-      const translated = dictionary.get(original) || original;
+      const translated = (dictionary.get(original) || original).replace(/[\u0B80-\u0BFF]/g, '').trim();
       if (el.getAttribute(attr) !== translated) el.setAttribute(attr, translated);
     });
   });
@@ -158,18 +158,19 @@ function translateDom(root, language) {
 const LanguageContext = createContext(null);
 
 export function LanguageProvider({ children }) {
-  const [language, setLanguage] = useState(() => {
-    try { return localStorage.getItem('ai-skillforge-language') === 'en' ? 'en' : 'ta'; }
-    catch { return 'ta'; }
+  const [language, setLanguageState] = useState(() => {
+    return 'en';
   });
 
+  const setLanguage = () => setLanguageState('en');
+
   useEffect(() => {
-    try { localStorage.setItem('ai-skillforge-language', language); } catch {}
-    document.documentElement.lang = language === 'ta' ? 'ta' : 'en';
+    try { localStorage.setItem('ai-skillforge-language', 'en'); } catch {}
+    document.documentElement.lang = 'en';
     let queued = false;
     const run = () => {
       queued = false;
-      translateDom(document.body, language);
+      translateDom(document.body, 'en');
     };
     run();
     const observer = new MutationObserver(() => {
