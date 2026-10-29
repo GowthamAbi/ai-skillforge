@@ -32,3 +32,23 @@ main,section,article{min-width:0;overflow-wrap:anywhere}
 .portal-card-english{background:radial-gradient(circle at 92% 10%,rgba(16,185,129,.16),transparent 37%),linear-gradient(155deg,rgba(18,49,55,.94),rgba(10,25,39,.97))}
 .portal-card-english:hover{border-color:#34d399}
 .portal-icon-english{color:#9ff5d0;background:linear-gradient(145deg,#11664e,#173a45);border:1px solid #34d39977}
+
+
+/* Accessible, persistent Tamil / English switcher */
+.language-switcher{font-family:Inter,ui-sans-serif,system-ui;max-width:calc(100vw - 16px)}
+.language-option{border:0;border-radius:999px;background:transparent;color:#d1d5db;padding:9px 13px;font-size:12px;font-weight:750;line-height:1;white-space:nowrap;transition:background .18s ease,color .18s ease}
+.language-option:hover{background:rgba(255,255,255,.09);color:#fff}
+.language-option.is-active{background:linear-gradient(120deg,#7165ff,#5145cd);color:#fff;box-shadow:0 3px 12px rgba(81,69,205,.35)}
+.language-option:focus-visible{outline:2px solid #a5b4fc;outline-offset:2px}
+@media(max-width:480px){
+  .language-switcher{right:8px;top:8px;padding:3px}
+  .language-option{padding:9px 10px;font-size:11px}
+  .portal-shell .relative.mx-auto{padding-top:4.5rem}
+  .portal-shell header{padding-right:0}
+  .portal-shell header>span{max-width:100%;white-space:normal}
+  .portal-card{width:100%;min-width:0}
+  .portal-card .text-3xl{font-size:1.55rem;line-height:1.25}
+  .portal-card .mt-9{margin-top:1.5rem}
+  button{touch-action:manipulation}
+}
+@media(prefers-reduced-motion:reduce){.language-option{transition:none}}
