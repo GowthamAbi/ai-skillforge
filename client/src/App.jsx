@@ -75,7 +75,7 @@ function LanguageSwitcher() {
   const { language, setLanguage, t } = useLanguage();
   return (
     <div className="language-switcher flex items-center gap-1 rounded-full border border-white/15 bg-[#111b32]/95 p-1 text-white shadow-xl backdrop-blur" role="group" aria-label={t('language.label')}>
-      <button type="button" onClick={() => setLanguage('ta')} aria-pressed={language === 'ta'} className={'language-option ' + (language === 'ta' ? 'is-active' : '')}>தமிழ்</button>
+      
       <button type="button" onClick={() => setLanguage('en')} aria-pressed={language === 'en'} className={'language-option ' + (language === 'en' ? 'is-active' : '')}>English</button>
     </div>
   );
@@ -94,9 +94,9 @@ export default function App() {
     setView(target);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-  if (view === 'home') return <div className="app-language-bar"><LanguageSwitcher/><Landing navigate={navigate} t={t}/></div>;
+  if (view === 'home') return <div className="app-language-bar"><Landing navigate={navigate} t={t}/></div>;
   return <div className="app-language-bar">
-    <LanguageSwitcher/>
+    
     <button type="button" onClick={() => navigate('home')} className="mobile-safe-bottom fixed bottom-2 right-3 z-50 flex items-center gap-2 rounded-full border border-white/20 bg-[#111b32] px-4 pt-3 text-xs font-bold text-white shadow-2xl transition hover:bg-indigo-600 sm:bottom-4 sm:right-4" aria-label={t('switch.mode')}><ArrowLeft size={15}/> {t('switch.mode')}</button>
     {view === 'old' ? <LegacyApp/> : view === 'path' ? <EngineerPath/> : view === 'roadmap' ? <AIRoadmap/> : <EnglishSpeaking/>}
   </div>;
