@@ -105,7 +105,8 @@ function translateDom(root, language) {
       if (!values) { values = {}; originalAttributes.set(el, values); }
       if (!(attr in values)) values[attr] = el.getAttribute(attr);
       const original = values[attr];
-      el.setAttribute(attr, dictionary.get(original) || original);
+      const translated = dictionary.get(original) || original;
+      if (el.getAttribute(attr) !== translated) el.setAttribute(attr, translated);
     });
   });
 }
