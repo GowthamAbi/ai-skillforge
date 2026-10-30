@@ -2,6 +2,13 @@ import { Router } from 'express';
 import RoadmapCodeWorkspace from '../models/RoadmapCodeWorkspace.js';
 
 const router = Router();
+const CODE_RUNNER_URL = process.env.CODE_RUNNER_EXECUTE_URL || 'https://emkc.org/api/v2/piston/execute';
+const runnerHeaders = () => ({ 'Content-Type': 'application/json', ...(process.env.PISTON_API_TOKEN ? { Authorization: 'Bearer ' + process.env.PISTON_API_TOKEN } : {}) });
+const runnerUnavailableMessage = (status) => {
+  if (status === 401 || status === 403) return 'Code runner authorization required. Configure PISTON_API_TOKEN on the backend or connect a self-hosted Piston runner with CODE_RUNNER_EXECUTE_URL.';
+  if (status === 429) return 'Code runner rate limit reached. Please wait a moment and try again.';
+  return 'Code runner service returned HTTP ' + status + '. Check the backend runner configuration.';
+};
 const LANGUAGES = {
   python: { version: '3.10.0', filename: 'main.py' },
   javascript: { version: '18.15.0', filename: 'main.js' },
@@ -46,8 +53,8 @@ router.post('/:topicId/check', async (req, res) => {
   for (let index = 0; index < testCases.length; index++) {
     const test = testCases[index];
     try {
-      const response = await fetch('https://emkc.org/api/v2/piston/execute', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+      const response = await fetch(CODE_RUNNER_URL, {
+        method: 'POST', headers: runnerHeaders(),
         signal: AbortSignal.timeout(20000),
         body: JSON.stringify({
           language, version: LANGUAGES[language].version,
@@ -55,7 +62,7 @@ router.post('/:topicId/check', async (req, res) => {
           stdin: test.input, run_timeout: 5000, compile_timeout: 10000
         })
       });
-      if (!response.ok) throw new Error('Runner unavailable');
+      if (!response.ok) throw new Error(runnerUnavailableMessage(response.status));
       const result = await response.json();
       const compile = result.compile || null;
       const run = result.run || {};
@@ -95,9 +102,9 @@ router.post('/:topicId/run', async (req, res) => {
   const started = Date.now();
   let result;
   try {
-    const response = await fetch('https://emkc.org/api/v2/piston/execute', {
+    const response = await fetch(CODE_RUNNER_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: runnerHeaders(),
       signal: AbortSignal.timeout(20000),
       body: JSON.stringify({
         language,
@@ -111,7 +118,7 @@ router.post('/:topicId/run', async (req, res) => {
     if (!response.ok) throw new Error(`Code runner returned HTTP ${response.status}`);
     result = await response.json();
   } catch (error) {
-    return res.status(502).json({ status: 'runner-error', error: error.name === 'TimeoutError' ? 'Code runner request timed out. Try again.' : 'Code runner is temporarily unavailable. Try again shortly.' });
+    return res.status(502).json({ status: 'runner-error', error: error.message || (error.name === 'TimeoutError' ? 'Code runner request timed out. Try again.' : 'Code runner is temporarily unavailable. Try again shortly.') });
   }
 
   const compile = result.compile || null;
