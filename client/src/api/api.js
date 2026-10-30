@@ -1,5 +1,6 @@
 const LEGACY_BASE = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? "https://ai-skillforge.onrender.com/api" : "http://localhost:5000/api");
-const PATH_BASE = import.meta.env.VITE_PATH_API_URL || "https://ai-skillforge-path-api.onrender.com/api";
+// All roadmap and code-runner endpoints are mounted on the main SkillForge API.
+const PATH_BASE = LEGACY_BASE;
 export async function api(path, options = {}) {
   const { pathApi = false, ...requestOptions } = options;
   const base = pathApi || path.startsWith('/path/') ? PATH_BASE : LEGACY_BASE;
