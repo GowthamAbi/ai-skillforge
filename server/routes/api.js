@@ -6,6 +6,7 @@ import StudyPlan from "../models/StudyPlan.js";
 import studyPlanRouter from "./studyPlan.js";
 import notificationRouter from "./notifications.js";
 import engineerPathRouter from './engineerPath.js';
+import roadmapCodeRouter from './roadmapCode.js';
 import { getStudySchedule } from "../utils/studySchedule.js";
 import Doubt from "../models/Doubt.js";
 import {
@@ -18,6 +19,7 @@ const router=Router();
 router.use('/study-plan', studyPlanRouter);
 router.use('/notifications',notificationRouter);
 router.use('/path', engineerPathRouter);
+router.use('/path/code', roadmapCodeRouter);
 router.get('/capabilities',async(req,res)=>{
   try{
     res.json({
