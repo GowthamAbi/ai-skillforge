@@ -1,5 +1,3 @@
-import { flattenTopics } from './aiRoadmap';
-
 const PRACTICAL_CONTEXT = {
   python: 'Use production quantities, machine downtime, rejection counts, shift names, and delivery targets as realistic inputs.',
   math: 'Use small production datasets to calculate averages, variation, probabilities, vectors, and relationships.',
@@ -105,4 +103,3 @@ print("Calculated result:", result)
   };
 }
 
-export const COMPLETE_LESSON_TITLES = new Set(flattenTopics().map(topic => topic.title));
