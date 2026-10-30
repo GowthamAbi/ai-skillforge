@@ -9,7 +9,7 @@ if (!apiKey) throw new Error('OPENAI_API_KEY is missing. Add it to the server en
 if (!process.env.MONGODB_URI) throw new Error('MONGODB_URI is missing.');
 
 const openai = new OpenAI({ apiKey });
-const model = process.env.OPENAI_MODEL || 'gpt-5.6-mini';
+const model = process.env.OPENAI_MODEL || 'gpt-5.4-mini';
 const topics = flattenTopics();
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
