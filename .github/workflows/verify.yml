@@ -22,6 +22,10 @@ jobs:
           node --check routes/studyPlan.js
           node --check routes/notifications.js
           node --check routes/engineerPath.js
+          node --check routes/roadmapCode.js
+          node --check models/GeneratedRoadmapLesson.js
+          node --check models/RoadmapCodeWorkspace.js
+          node --check scripts/generateRoadmapLessons.js
           node --check models/EngineerJourney.js
           node --check services/notifications.js
       - name: Build frontend
