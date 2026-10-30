@@ -2,12 +2,6 @@ name: Generate AI Roadmap Lessons
 
 on:
   workflow_dispatch:
-    inputs:
-      regenerate_existing:
-        description: "Regenerate lessons that are already saved (normally leave false)"
-        required: true
-        default: "false"
-        type: boolean
 
 permissions:
   contents: read
@@ -26,7 +20,6 @@ jobs:
       MONGODB_URI: ${{ secrets.MONGODB_URI }}
       MONGODB_DB: ${{ secrets.MONGODB_DB }}
       OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-5.6-mini' }}
-      REGENERATE_EXISTING: ${{ inputs.regenerate_existing }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
