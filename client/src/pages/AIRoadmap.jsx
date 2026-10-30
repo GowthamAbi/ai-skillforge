@@ -5,6 +5,8 @@ import { AI_PHASES, flattenTopics } from '../data/aiRoadmap';
 import { PYTHON_FOUNDATION_LESSON } from '../data/lessons/pythonFoundation';
 import { PYTHON_SYNTAX_LESSON } from '../data/lessons/pythonSyntax';
 import { PYTHON_VARIABLES_LESSON } from '../data/lessons/pythonVariables';
+import { PYTHON_INPUT_OUTPUT_LESSON } from '../data/lessons/pythonInputOutput';
+import { PYTHON_CONDITIONALS_LESSON, PYTHON_LOOPS_LESSON } from '../data/lessons/pythonControlFlow';
 import { buildCompleteLesson } from '../data/lessons/buildCompleteLesson';
 
 const STAGES = [
@@ -94,6 +96,9 @@ export default function AIRoadmap() {
     if (topic.title === PYTHON_FOUNDATION_LESSON.title) starterCode = PYTHON_FOUNDATION_LESSON.code;
     else if (topic.title === PYTHON_SYNTAX_LESSON.title) starterCode = PYTHON_SYNTAX_LESSON.code;
     else if (topic.title === PYTHON_VARIABLES_LESSON.title) starterCode = PYTHON_VARIABLES_LESSON.code;
+    else if (topic.title === PYTHON_INPUT_OUTPUT_LESSON.title) starterCode = PYTHON_INPUT_OUTPUT_LESSON.code;
+    else if (topic.title === PYTHON_CONDITIONALS_LESSON.title) starterCode = PYTHON_CONDITIONALS_LESSON.code;
+    else if (topic.title === PYTHON_LOOPS_LESSON.title) starterCode = PYTHON_LOOPS_LESSON.code;
     else starterCode = buildCompleteLesson(topic).code;
     setCode(saved.codeDraft || starterCode);
     setLearningNotes(saved.learningNotes || '');
@@ -101,7 +106,7 @@ export default function AIRoadmap() {
     setCheckedQuestions(Object.fromEntries((saved.quizAnswers || []).map((answer, index) => [index, answer])));
     setQuizSubmitted(Boolean(saved.quizPassed));
   }, [selectedId, loaded, progress]);
-  const detailedLesson = topic?.title === PYTHON_FOUNDATION_LESSON.title ? PYTHON_FOUNDATION_LESSON : topic?.title === PYTHON_SYNTAX_LESSON.title ? PYTHON_SYNTAX_LESSON : topic?.title === PYTHON_VARIABLES_LESSON.title ? PYTHON_VARIABLES_LESSON : topic ? buildCompleteLesson(topic) : null;
+  const detailedLesson = topic?.title === PYTHON_FOUNDATION_LESSON.title ? PYTHON_FOUNDATION_LESSON : topic?.title === PYTHON_SYNTAX_LESSON.title ? PYTHON_SYNTAX_LESSON : topic?.title === PYTHON_VARIABLES_LESSON.title ? PYTHON_VARIABLES_LESSON : topic?.title === PYTHON_INPUT_OUTPUT_LESSON.title ? PYTHON_INPUT_OUTPUT_LESSON : topic?.title === PYTHON_CONDITIONALS_LESSON.title ? PYTHON_CONDITIONALS_LESSON : topic?.title === PYTHON_LOOPS_LESSON.title ? PYTHON_LOOPS_LESSON : topic ? buildCompleteLesson(topic) : null;
   const topicRecord = topic ? getTopicRecord(progress, topic.id) : {completedStages:[],completed:false};
   const allDone = allTopics.filter(t => getTopicRecord(progress,t.id).completed).length;
   const overallPct = pct(allDone, allTopics.length);
