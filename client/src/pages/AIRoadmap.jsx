@@ -89,9 +89,9 @@ export default function AIRoadmap() {
     setCode(saved.codeDraft || '# Topic: ' + topic.title + '\n# Write and test your implementation here.\n');
     setLearningNotes(saved.learningNotes || '');
     setTaskAnswer(saved.taskAnswer || '');
-    setCheckedQuestions({});
+    setCheckedQuestions(Object.fromEntries((saved.quizAnswers || []).map((answer, index) => [index, answer])));
     setQuizSubmitted(Boolean(saved.quizPassed));
-  }, [selectedId, loaded]);
+  }, [selectedId, loaded, progress]);
   const topicRecord = topic ? getTopicRecord(progress, topic.id) : {completedStages:[],completed:false};
   const allDone = allTopics.filter(t => getTopicRecord(progress,t.id).completed).length;
   const overallPct = pct(allDone, allTopics.length);
@@ -135,9 +135,14 @@ export default function AIRoadmap() {
     {q:'What should you do after coding practice?', options:['Understand the output and test changes to the code','Move to the next topic without checking the output','Close without saving the code'],answer:0},
     {q:'What should you do after a wrong quiz answer?', options:['Ignore the mistake','Record the mistake, revise the concept, and try again','Skip the entire lesson'],answer:1}
   ];
-  const submitQuiz = () => {
+  const submitQuiz = async () => {
+    const passed = quizOptions.every((q,i)=>checkedQuestions[i]===q.answer);
     setQuizSubmitted(true);
-    setNotice(quizOptions.every((q,i)=>checkedQuestions[i]===q.answer) ? 'Quiz passed. Complete the revision stage to finish this topic.' : 'Some quiz answers are incorrect. Review the correct answers, revise the lesson, and try again.');
+    setNotice(passed ? 'Quiz passed. Complete the revision stage to finish this topic.' : 'Some quiz answers are incorrect. Review the correct answers, revise the lesson, and try again.');
+    try {
+      const result = await api(`/path/roadmap-progress/${encodeURIComponent(topic.id)}`, {method:'PATCH', pathApi:true, body:JSON.stringify({quizAnswers:quizOptions.map((_,i)=>checkedQuestions[i] ?? -1), quizScore:quizOptions.filter((q,i)=>checkedQuestions[i]===q.answer).length, quizTotal:quizOptions.length, quizPassed:passed})});
+      setProgress(old=>({...old,[topic.id]:{...old[topic.id],...result.record}}));
+    } catch (error) { setNotice(`Quiz result could not be saved: ${error.message}`); }
   };
   const finishTopic = async () => {
     const stages = STAGES.map(stage=>stage.id);
