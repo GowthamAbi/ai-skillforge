@@ -84,21 +84,39 @@ export default function NotebookEditor({
   };
 
   const runAllCells = async () => {
-    const executionCode = cells.map(item => item.code).filter(Boolean).join('\n\n');
-    if (!executionCode.trim()) return;
+    const runnableCells = cells.filter(item => item.code.trim());
+    if (!runnableCells.length) return;
     setRunningCode(true);
     setCells(old => old.map(item => ({ ...item, result: null })));
+    let previousStdout = '';
     try {
-      const result = await api(`/path/code/${encodeURIComponent(topicId)}/run`, {
-        method: 'POST', pathApi: true,
-        body: JSON.stringify({ language: codeLanguage, code: executionCode, stdin })
-      });
-      setCells(old => old.map((item, index) => index === old.length - 1 ? { ...item, result } : item));
-      setNotice(result.status === 'success' ? 'All notebook cells executed.' : 'Notebook execution returned an error. See the last cell output.');
+      for (const cell of runnableCells) {
+        const cellIndex = cells.findIndex(item => item.id === cell.id);
+        const executionCode = codeLanguage === 'java'
+          ? cell.code
+          : cells.slice(0, cellIndex + 1).map(item => item.code).filter(Boolean).join('\n\n');
+        setCells(old => old.map(item => item.id === cell.id ? { ...item, result: { status: 'running', stdout: '', stderr: '' } } : item));
+        const result = await api(`/path/code/${encodeURIComponent(topicId)}/run`, {
+          method: 'POST', pathApi: true,
+          body: JSON.stringify({ language: codeLanguage, code: executionCode, stdin })
+        });
+        const fullOutput = String(result.stdout || '');
+        const cellOutput = codeLanguage !== 'java' && fullOutput.startsWith(previousStdout)
+          ? fullOutput.slice(previousStdout.length).replace(/^\n/, '')
+          : fullOutput;
+        previousStdout = fullOutput;
+        setCells(old => old.map(item => item.id === cell.id ? { ...item, result: { ...result, stdout: cellOutput } } : item));
+        if (result.status !== 'success') {
+          setNotice(`Execution stopped at cell ${cellIndex + 1}. Check its error output.`);
+          return;
+        }
+      }
+      setNotice('All notebook cells executed in order.');
     } catch (error) {
       setCells(old => old.map((item, index) => index === old.length - 1 ? {
         ...item, result: { status: 'runner-error', stderr: error.message || 'Code runner unavailable.' }
       } : item));
+      setNotice(error.message || 'Notebook execution failed.');
     } finally { setRunningCode(false); }
   };
 
@@ -145,7 +163,7 @@ export default function NotebookEditor({
         </select>
       </label>
       <button onClick={() => addCell(cells[cells.length - 1].id)} className="rounded-lg bg-violet-100 px-3 py-2 text-xs font-bold text-violet-800">＋ Code</button>
-      <button onClick={runAllCells} disabled={runningCode || !combinedCode.trim()} className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white disabled:opacity-50">▶ Run all</button>\n      <button onClick={resetKernel} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold">Reset outputs</button>\n      <button onClick={saveNow} disabled={saving} className="rounded-lg bg-slate-100 px-3 py-2 text-xs font-bold">{saving ? 'Saving…' : 'Save notebook'}</button>
+      <button onClick={runAllCells} disabled={runningCode || !combinedCode.trim()} className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white disabled:opacity-50">▶ Run all</button>\n      <button onClick={resetKernel} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold">Clear outputs</button>\n      <button onClick={saveNow} disabled={saving} className="rounded-lg bg-slate-100 px-3 py-2 text-xs font-bold">{saving ? 'Saving…' : 'Save notebook'}</button>
       <span className="text-xs text-slate-500">{saving ? 'Saving changes…' : 'Autosave enabled'}</span>
     </div>
     <div className="mt-4 space-y-4">
