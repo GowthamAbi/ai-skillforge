@@ -83,7 +83,32 @@ export default function NotebookEditor({
     } finally { setRunningCode(false); }
   };
 
-  const runAllCells = async () => {\n    const executionCode = cells.map(item => item.code).filter(Boolean).join('\\n\\n');\n    if (!executionCode.trim()) return;\n    setRunningCode(true);\n    setCells(old => old.map(item => ({ ...item, result: null })));\n    try {\n      const result = await api(`/path/code/${encodeURIComponent(topicId)}/run`, { method: 'POST', pathApi: true, body: JSON.stringify({ language: codeLanguage, code: executionCode, stdin }) });\n      setCells(old => old.map((item, index) => index === old.length - 1 ? { ...item, result } : item));\n      setNotice(result.status === 'success' ? 'All notebook cells executed.' : 'Notebook execution returned an error. See the last cell output.');\n    } catch (error) {\n      setCells(old => old.map((item, index) => index === old.length - 1 ? { ...item, result: { status: 'runner-error', stderr: error.message || 'Code runner unavailable.' } } : item));\n    } finally { setRunningCode(false); }\n  };\n\n  const resetKernel = () => { setCells(old => old.map(item => ({ ...item, result: null }))); setStdin(''); setNotice('Execution outputs cleared. Your code cells are preserved.'); };\n\n  const saveNow = async () => {
+  const runAllCells = async () => {
+    const executionCode = cells.map(item => item.code).filter(Boolean).join('\n\n');
+    if (!executionCode.trim()) return;
+    setRunningCode(true);
+    setCells(old => old.map(item => ({ ...item, result: null })));
+    try {
+      const result = await api(`/path/code/${encodeURIComponent(topicId)}/run`, {
+        method: 'POST', pathApi: true,
+        body: JSON.stringify({ language: codeLanguage, code: executionCode, stdin })
+      });
+      setCells(old => old.map((item, index) => index === old.length - 1 ? { ...item, result } : item));
+      setNotice(result.status === 'success' ? 'All notebook cells executed.' : 'Notebook execution returned an error. See the last cell output.');
+    } catch (error) {
+      setCells(old => old.map((item, index) => index === old.length - 1 ? {
+        ...item, result: { status: 'runner-error', stderr: error.message || 'Code runner unavailable.' }
+      } : item));
+    } finally { setRunningCode(false); }
+  };
+
+  const resetKernel = () => {
+    setCells(old => old.map(item => ({ ...item, result: null })));
+    setStdin('');
+    setNotice('Execution outputs cleared. Your code cells are preserved.');
+  };
+
+  const saveNow = async () => {
     setSaving(true);
     try {
       await api(`/path/code/${encodeURIComponent(topicId)}`, {
