@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { randomUUID } from 'node:crypto';
 import EngineerJourney from '../models/EngineerJourney.js';
+import GeneratedRoadmapLesson from '../models/GeneratedRoadmapLesson.js';
 import { COURSE_SUMMARY, LESSON_BY_ID, PATH_DAYS, PATH_MODULES, validUdemyLectureLink } from '../data/pathCurriculum.js';
 import { lessonQuiz } from '../data/pathQuiz.js';
 import { dateInIndia } from '../utils/studySchedule.js';
@@ -109,6 +110,17 @@ function serialize(state) {
     days
   };
 }
+
+router.get('/roadmap-lessons/status', asyncRoute(async (_req, res) => {
+  const generated = await GeneratedRoadmapLesson.countDocuments();
+  res.json({ generated, total: 329, remaining: Math.max(0, 329 - generated), complete: generated >= 329 });
+}));
+
+router.get('/roadmap-lessons/:topicId', asyncRoute(async (req, res) => {
+  const lesson = await GeneratedRoadmapLesson.findOne({ topicId: req.params.topicId }).lean();
+  if (!lesson) return res.status(404).json({ error: 'This lesson has not been generated yet.' });
+  res.json({ lesson });
+}));
 
 router.get('/roadmap-progress', asyncRoute(async (_req, res) => {
   const state = await findJourney();
