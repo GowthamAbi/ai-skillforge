@@ -4,6 +4,7 @@ import { api } from '../api/api';
 import { AI_PHASES, flattenTopics } from '../data/aiRoadmap';
 import { PYTHON_FOUNDATION_LESSON } from '../data/lessons/pythonFoundation';
 import { PYTHON_SYNTAX_LESSON } from '../data/lessons/pythonSyntax';
+import { PYTHON_VARIABLES_LESSON } from '../data/lessons/pythonVariables';
 
 const STAGES = [
   { id:'concept', title:'Concept learning', time:'20–30 minutes', description:'Learn the theory, key technical terms, diagrams, and basic examples.', icon:BookOpen },
@@ -88,13 +89,13 @@ export default function AIRoadmap() {
   useEffect(() => {
     if (!topic || !loaded) return;
     const saved = getTopicRecord(progress, topic.id);
-    setCode(saved.codeDraft || (topic.title === PYTHON_FOUNDATION_LESSON.title ? PYTHON_FOUNDATION_LESSON.code : topic.title === PYTHON_SYNTAX_LESSON.title ? PYTHON_SYNTAX_LESSON.code : '# Topic: ' + topic.title + '\n# Write and test your implementation here.\n'));
+    setCode(saved.codeDraft || (topic.title === PYTHON_FOUNDATION_LESSON.title ? PYTHON_FOUNDATION_LESSON.code : topic.title === PYTHON_SYNTAX_LESSON.title ? PYTHON_SYNTAX_LESSON.code : topic.title === PYTHON_VARIABLES_LESSON.title ? PYTHON_VARIABLES_LESSON.code : '# Topic: ' + topic.title + '\n# Write and test your implementation here.\n'));
     setLearningNotes(saved.learningNotes || '');
     setTaskAnswer(saved.taskAnswer || '');
     setCheckedQuestions(Object.fromEntries((saved.quizAnswers || []).map((answer, index) => [index, answer])));
     setQuizSubmitted(Boolean(saved.quizPassed));
   }, [selectedId, loaded, progress]);
-  const detailedLesson = topic?.title === PYTHON_FOUNDATION_LESSON.title ? PYTHON_FOUNDATION_LESSON : topic?.title === PYTHON_SYNTAX_LESSON.title ? PYTHON_SYNTAX_LESSON : null;
+  const detailedLesson = topic?.title === PYTHON_FOUNDATION_LESSON.title ? PYTHON_FOUNDATION_LESSON : topic?.title === PYTHON_SYNTAX_LESSON.title ? PYTHON_SYNTAX_LESSON : topic?.title === PYTHON_VARIABLES_LESSON.title ? PYTHON_VARIABLES_LESSON : null;
   const topicRecord = topic ? getTopicRecord(progress, topic.id) : {completedStages:[],completed:false};
   const allDone = allTopics.filter(t => getTopicRecord(progress,t.id).completed).length;
   const overallPct = pct(allDone, allTopics.length);
