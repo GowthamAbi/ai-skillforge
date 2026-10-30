@@ -33,6 +33,58 @@ router.patch('/:topicId', async (req, res) => {
   }
 });
 
+router.post('/:topicId/check', async (req, res) => {
+  const { language, code, testCases } = req.body || {};
+  if (!LANGUAGES[language]) return res.status(400).json({ error: 'Choose Python, JavaScript, or Java.' });
+  if (typeof code !== 'string' || !code.trim() || code.length > 30000) return res.status(400).json({ error: 'Enter code (maximum 30,000 characters).' });
+  if (!Array.isArray(testCases) || testCases.length < 1 || testCases.length > 10 ||
+      testCases.some(test => typeof test.input !== 'string' || typeof test.expectedOutput !== 'string')) {
+    return res.status(400).json({ error: 'This task has no valid automated test cases yet.' });
+  }
+  const started = Date.now();
+  const cases = [];
+  for (let index = 0; index < testCases.length; index++) {
+    const test = testCases[index];
+    try {
+      const response = await fetch('https://emkc.org/api/v2/piston/execute', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(20000),
+        body: JSON.stringify({
+          language, version: LANGUAGES[language].version,
+          files: [{ name: LANGUAGES[language].filename, content: code }],
+          stdin: test.input, run_timeout: 5000, compile_timeout: 10000
+        })
+      });
+      if (!response.ok) throw new Error('Runner unavailable');
+      const result = await response.json();
+      const compile = result.compile || null;
+      const run = result.run || {};
+      const actual = String(run.stdout || '').trim();
+      const expected = String(test.expectedOutput || '').trim();
+      const ok = (!compile || compile.code === 0) && run.code === 0 && actual === expected;
+      cases.push({ index: index + 1, passed: ok, expected, actual, stderr: String(compile?.stderr || run.stderr || '').slice(0, 3000) });
+    } catch (error) {
+      cases.push({ index: index + 1, passed: false, expected: test.expectedOutput, actual: '', stderr: error.message || 'Execution failed' });
+    }
+  }
+  const passed = cases.every(test => test.passed);
+  const stdout = cases.map(test => `Test ${test.index}: ${test.passed ? 'PASS' : 'FAIL'}`).join('\n');
+  try {
+    await RoadmapCodeWorkspace.findOneAndUpdate(
+      { topicId: req.params.topicId },
+      {
+        $set: { language, [`codeDrafts.${language}`]: code, updatedAt: new Date() },
+        $setOnInsert: { topicId: req.params.topicId },
+        $push: { attempts: { $each: [{ language, code, stdin: '', stdout, stderr: cases.filter(test => test.stderr).map(test => test.stderr).join('\n'), exitCode: passed ? 0 : 1, status: passed ? 'success' : 'runtime-error', durationMs: Date.now() - started }], $slice: -30 } }
+      },
+      { upsert: true, new: true, runValidators: true }
+    );
+    res.json({ passed, total: cases.length, passedCount: cases.filter(test => test.passed).length, cases, durationMs: Date.now() - started });
+  } catch {
+    res.status(500).json({ error: 'Task was checked, but saving the result failed.' });
+  }
+});
+
 router.post('/:topicId/run', async (req, res) => {
   const { language, code, stdin = '' } = req.body || {};
   const config = LANGUAGES[language];
