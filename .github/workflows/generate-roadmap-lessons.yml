@@ -1,0 +1,50 @@
+name: Generate AI Roadmap Lessons
+
+on:
+  workflow_dispatch:
+    inputs:
+      regenerate_existing:
+        description: "Regenerate lessons that are already saved (normally leave false)"
+        required: true
+        default: "false"
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: roadmap-lesson-generation
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    name: Generate and save all roadmap lessons
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      MONGODB_URI: ${{ secrets.MONGODB_URI }}
+      MONGODB_DB: ${{ secrets.MONGODB_DB }}
+      OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-5.6-mini' }}
+      REGENERATE_EXISTING: ${{ inputs.regenerate_existing }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate required secrets
+        run: |
+          test -n "$OPENAI_API_KEY" || (echo "Missing OPENAI_API_KEY repository secret" && exit 1)
+          test -n "$MONGODB_URI" || (echo "Missing MONGODB_URI repository secret" && exit 1)
+
+      - name: Install backend dependencies
+        working-directory: server
+        run: npm install --no-audit --no-fund
+
+      - name: Generate and save roadmap lessons
+        working-directory: server
+        run: npm run generate:roadmap
