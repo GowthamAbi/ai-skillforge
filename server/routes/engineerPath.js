@@ -113,10 +113,12 @@ function serialize(state) {
 router.get('/roadmap-progress', asyncRoute(async (_req, res) => {
   const state = await findJourney();
   const progress = Object.fromEntries(state.aiRoadmapProgress.map(item => [item.topicId, {
-    topicId: item.topicId,
-    completedStages: item.completedStages,
-    completed: item.completed,
-    completedAt: item.completedAt || null,
+    topicId: item.topicId, completedStages: item.completedStages, completed: item.completed,
+    currentStage: item.currentStage || 'concept', codeDraft: item.codeDraft || '',
+    learningNotes: item.learningNotes || '', taskAnswer: item.taskAnswer || '',
+    quizAnswers: item.quizAnswers || [], quizScore: item.quizScore ?? null,
+    quizTotal: item.quizTotal ?? null, quizPassed: Boolean(item.quizPassed),
+    lastOpenedAt: item.lastOpenedAt || null, completedAt: item.completedAt || null,
     updatedAt: item.updatedAt
   }]));
   res.json({ progress });
@@ -124,27 +126,37 @@ router.get('/roadmap-progress', asyncRoute(async (_req, res) => {
 
 router.patch('/roadmap-progress/:topicId', asyncRoute(async (req, res) => {
   const topicId = String(req.params.topicId || '').trim();
-  const completedStages = req.body?.completedStages;
   if (!topicId || topicId.length > 300) return res.status(400).json({ error: 'Invalid topic ID' });
-  const allowedStages = ['concept', 'coding', 'task', 'revision'];
-  if (!Array.isArray(completedStages) || completedStages.some(stage => !allowedStages.includes(stage))) {
-    return res.status(400).json({ error: 'completedStages must contain valid learning stages' });
+  const body = req.body || {};
+  const stages = ['concept', 'coding', 'task', 'revision'];
+  const hasStages = Object.prototype.hasOwnProperty.call(body, 'completedStages');
+  if (hasStages && (!Array.isArray(body.completedStages) || body.completedStages.some(stage => !stages.includes(stage)))) return res.status(400).json({ error: 'Invalid completedStages' });
+  for (const [field, limit] of [['codeDraft', 30000], ['learningNotes', 12000], ['taskAnswer', 12000]]) {
+    if (body[field] !== undefined && (typeof body[field] !== 'string' || body[field].length > limit)) return res.status(400).json({ error: field + ' is too long or invalid' });
   }
-  const uniqueStages = [...new Set(completedStages)];
-  const completed = req.body?.completed === true && allowedStages.every(stage => uniqueStages.includes(stage));
+  if (body.currentStage !== undefined && !stages.includes(body.currentStage)) return res.status(400).json({ error: 'Invalid currentStage' });
+  if (body.quizAnswers !== undefined && (!Array.isArray(body.quizAnswers) || body.quizAnswers.length > 30 || body.quizAnswers.some(n => !Number.isInteger(n) || n < 0 || n > 10))) return res.status(400).json({ error: 'Invalid quizAnswers' });
   const state = await findJourney();
   let record = state.aiRoadmapProgress.find(item => item.topicId === topicId);
-  if (!record) {
-    state.aiRoadmapProgress.push({ topicId, completedStages: uniqueStages, completed, completedAt: completed ? new Date() : null, updatedAt: new Date() });
-    record = state.aiRoadmapProgress.find(item => item.topicId === topicId);
-  } else {
-    record.completedStages = uniqueStages;
-    record.completed = completed;
-    record.completedAt = completed ? (record.completedAt || new Date()) : null;
-    record.updatedAt = new Date();
+  if (!record) { state.aiRoadmapProgress.push({ topicId }); record = state.aiRoadmapProgress.find(item => item.topicId === topicId); }
+  if (hasStages) record.completedStages = [...new Set(body.completedStages)];
+  if (body.completed !== undefined) {
+    record.completed = body.completed === true && stages.every(stage => record.completedStages.includes(stage));
+    record.completedAt = record.completed ? (record.completedAt || new Date()) : null;
   }
+  for (const field of ['codeDraft', 'learningNotes', 'taskAnswer', 'currentStage', 'quizAnswers', 'quizScore', 'quizTotal', 'quizPassed']) {
+    if (body[field] !== undefined) record[field] = body[field];
+  }
+  if (body.opened === true) record.lastOpenedAt = new Date();
+  record.updatedAt = new Date();
   await state.save();
-  res.json({ record: { topicId: record.topicId, completedStages: record.completedStages, completed: record.completed, completedAt: record.completedAt || null, updatedAt: record.updatedAt }, message: completed ? 'Topic completion saved.' : 'Learning progress saved.' });
+  res.json({ record: {
+    topicId: record.topicId, completedStages: record.completedStages, completed: record.completed,
+    currentStage: record.currentStage, codeDraft: record.codeDraft, learningNotes: record.learningNotes,
+    taskAnswer: record.taskAnswer, quizAnswers: record.quizAnswers, quizScore: record.quizScore,
+    quizTotal: record.quizTotal, quizPassed: record.quizPassed, lastOpenedAt: record.lastOpenedAt || null,
+    completedAt: record.completedAt || null, updatedAt: record.updatedAt
+  }, message: 'Learning progress and lesson workspace saved to MongoDB.' });
 }));
 
 router.get('/dashboard', async (_req, res) => {
