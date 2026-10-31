@@ -1,0 +1,2 @@
+import React from 'react';
+export default function LearningRoadmapPage({navigate}) { return <main className="min-h-screen bg-slate-950 p-8 text-white"><h1 className="text-3xl font-bold">Learning Roadmap</h1><p className="mt-3 text-slate-300">Explore the seven AI learning phases.</p><button onClick={()=>navigate('curriculum')} className="mt-5 rounded-xl bg-violet-600 px-4 py-2">Open interactive curriculum</button></main>; }
