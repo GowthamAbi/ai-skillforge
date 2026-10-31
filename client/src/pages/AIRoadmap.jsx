@@ -104,7 +104,6 @@ export default function AIRoadmap() {
   const [selectedTaskIndex, setSelectedTaskIndex] = useState(0);
   const [taskCheckResult, setTaskCheckResult] = useState(null);
   const [notesSaveState, setNotesSaveState] = useState('saved');
-  const [studySecondsToday, setStudySecondsToday] = useState(() => Number(readStudyTime()[localDayKey()]) || 0);
   const [studyTimeByDay, setStudyTimeByDay] = useState(() => readStudyTime());
 
   const load = useCallback(async () => {
@@ -223,23 +222,26 @@ export default function AIRoadmap() {
   }, [loaded, topic?.id, learningNotes, taskAnswer]);
   useEffect(() => {
     if (!loaded || activeView !== 'lesson') return undefined;
-    let lastSavedElapsed = 0;
-    const startedAt = Date.now();
+    let lastTick = Date.now();
     const flush = () => {
-      const elapsed = Math.floor((Date.now()-startedAt)/1000);
-      const delta = elapsed-lastSavedElapsed;
-      if (delta <= 0) return;
-      lastSavedElapsed = elapsed;
+      const now = Date.now();
+      const delta = Math.max(0,Math.floor((now-lastTick)/1000));
+      lastTick = now;
+      if (delta <= 0 || document.visibilityState !== 'visible') return;
       const key = localDayKey();
       setStudyTimeByDay(previous => {
         const next = {...previous,[key]:(Number(previous[key])||0)+delta};
         try { window.localStorage.setItem(STUDY_TIME_KEY,JSON.stringify(next)); } catch {}
         return next;
       });
-      setStudySecondsToday(previous => previous+delta);
     };
-    const timer = window.setInterval(flush,15000);
-    return () => { window.clearInterval(timer); flush(); };
+    const timer = window.setInterval(flush,1000);
+    document.addEventListener('visibilitychange',flush);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange',flush);
+      flush();
+    };
   }, [loaded,activeView]);
   const allDone = allTopics.filter(t => getTopicRecord(progress,t.id).completed).length;
   const overallPct = pct(allDone, allTopics.length);
