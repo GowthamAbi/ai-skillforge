@@ -32,6 +32,7 @@ export default function ForgeDashboard({navigate}) {
   const [goals,setGoals]=useState([false,false,false,false]);
   const topics=useMemo(()=>flattenTopics(),[]);
   const totalModules=AI_PHASES.reduce((n,p)=>n+p.groups.length,0);
+  const completed=Object.values(progress||{}).filter(x=>x?.completed).length;
   const percent=topics.length?Math.round(completed/topics.length*100):0;
   const filtered=AI_PHASES.filter(p=>(p.title+' '+p.description+' '+p.groups.map(g=>g.title).join(' ')).toLowerCase().includes(query.toLowerCase()));
   useEffect(()=>{
