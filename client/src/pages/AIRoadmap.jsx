@@ -204,7 +204,7 @@ export default function AIRoadmap() {
     const timer = window.setTimeout(async () => {
       setNotesSaveState('saving');
       try {
-        const result = await api(\`/path/roadmap-progress/\${encodeURIComponent(topic.id)}\`, {
+        const result = await api(`/path/roadmap-progress/${encodeURIComponent(topic.id)}`, {
           method:'PATCH', pathApi:true,
           body:JSON.stringify({
             completedStages: topicRecord.completedStages || [],
