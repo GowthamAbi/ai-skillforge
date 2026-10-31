@@ -4,8 +4,8 @@ const translations = {
   en: {
     'language.tamil':'Tamil', 'language.english':'English', 'language.label':'Language',
     'home.space':'PERSONAL LEARNING SPACE', 'home.choose':'CHOOSE YOUR JOURNEY',
-    'home.headline':'One place.', 'home.headline2':'Four ways to grow.',
-    'home.intro':'Continue your existing roadmap, explore the AI Engineer path, learn the full AI syllabus topic-by-topic, or practise English speaking.',
+    'home.headline':'One place.', 'home.headline2':'Five ways to grow.',
+    'home.intro':'Continue your original roadmap, follow the AI Engineer path, study the complete AI syllabus, practise English speaking, or run your own AI research experiments.',
     'home.old.eyebrow':'01 · ORIGINAL EXPERIENCE', 'home.old.title':'Old SkillForge',
     'home.old.description':'Your existing 50-day roadmap, timetable, projects, progress and familiar sidebar — unchanged.',
     'home.old.action':'Open classic dashboard',
@@ -18,14 +18,17 @@ const translations = {
     'home.roadmap.eyebrow':'04 · COMPLETE AI SYLLABUS', 'home.roadmap.title':'AI Roadmap',
     'home.roadmap.description':'All 7 syllabus phases, nested topics, Tamil-guided lessons and topic-by-topic progress tracking.',
     'home.roadmap.action':'Open full roadmap',
-    'home.footer':'Built for your AI Engineer journey · 4 hours a day',
+    'home.research.eyebrow':'05 · EXPERIMENT AND DISCOVER', 'home.research.title':'AI Research Lab',
+    'home.research.description':'Plan AI experiments, record hypotheses, compare approaches, and document your findings.',
+    'home.research.action':'Open research lab',
+    'home.footer':'Built for your AI Engineer journey · 5 learning spaces',
     'switch.mode':'Switch dashboard'
   },
   ta: {
     'language.tamil':'தமிழ்', 'language.english':'ஆங்கிலம்', 'language.label':'மொழி',
     'home.space':'உங்கள் தனிப்பட்ட கற்றல் தளம்', 'home.choose':'உங்கள் கற்றல் பயணத்தைத் தேர்ந்தெடுக்கவும்',
-    'home.headline':'ஒரே தளம்.', 'home.headline2':'வளர்ச்சிக்கான நான்கு வழிகள்.',
-    'home.intro':'உங்கள் தற்போதைய Roadmap-ஐத் தொடருங்கள், AI Engineer Path-ஐக் கற்றுக்கொள்ளுங்கள், முழு AI பாடத்திட்டத்தைப் படியுங்கள் அல்லது ஆங்கிலப் பேச்சுப் பயிற்சி செய்யுங்கள்.',
+    'home.headline':'ஒரே தளம்.', 'home.headline2':'வளர்ச்சிக்கான ஐந்து வழிகள்.',
+    'home.intro':'உங்கள் பழைய Roadmap-ஐத் தொடருங்கள், AI Engineer Path-ஐக் கற்றுக்கொள்ளுங்கள், முழு AI பாடத்திட்டத்தைப் படியுங்கள், ஆங்கிலப் பேச்சுப் பயிற்சி செய்யுங்கள் அல்லது AI Research செய்யுங்கள்.',
     'home.old.eyebrow':'01 · பழைய கற்றல் முறை', 'home.old.title':'பழைய SkillForge',
     'home.old.description':'உங்களுடைய 50 நாள் Roadmap, கால அட்டவணை, Projects, முன்னேற்றம் மற்றும் பழக்கமான Sidebar ஆகியவை மாற்றமின்றி இருக்கும்.',
     'home.old.action':'பழைய Dashboard திறக்கவும்',
@@ -38,7 +41,10 @@ const translations = {
     'home.roadmap.eyebrow':'04 · முழுமையான AI பாடத்திட்டம்', 'home.roadmap.title':'AI Roadmap',
     'home.roadmap.description':'7 பாடத்திட்ட நிலைகள், துணைத் தலைப்புகள், தமிழ் வழிகாட்டுதலுடன் பாடங்கள் மற்றும் ஒவ்வொரு தலைப்பின் முன்னேற்றம்.',
     'home.roadmap.action':'முழு Roadmap திறக்கவும்',
-    'home.footer':'உங்கள் AI Engineer பயணத்திற்காக உருவாக்கப்பட்டது · தினமும் 4 மணி நேரம்',
+    'home.research.eyebrow':'05 · ஆராய்ந்து கண்டறியுங்கள்', 'home.research.title':'AI Research Lab',
+    'home.research.description':'AI பரிசோதனைகளைத் திட்டமிட்டு, hypotheses மற்றும் முடிவுகளைப் பதிவு செய்யுங்கள்.',
+    'home.research.action':'Research Lab திறக்கவும்',
+    'home.footer':'உங்கள் AI Engineer பயணத்திற்கான 5 கற்றல் பிரிவுகள்',
     'switch.mode':'Dashboard மாற்றவும்'
   }
 };
