@@ -13,13 +13,27 @@ import {
   githubToday
 } from "../services/githubService.js";
 import {
-  mentor,answerDoubt,reviewProject
+  mentor,answerDoubt,reviewProject,askTutor
 } from "../services/openaiService.js";
 const router=Router();
 router.use('/study-plan', studyPlanRouter);
 router.use('/notifications',notificationRouter);
 router.use('/path', engineerPathRouter);
 router.use('/path/code', roadmapCodeRouter);
+router.post('/tutor/ask', async (req, res) => {
+  try {
+    const message = String(req.body?.message || '').trim();
+    if (!message) return res.status(400).json({ error: 'Enter a question first.' });
+    if (message.length > 4000) return res.status(400).json({ error: 'Question is too long (maximum 4,000 characters).' });
+    const history = Array.isArray(req.body?.history) ? req.body.history : [];
+    const answer = await askTutor(message, history);
+    return res.json({ answer });
+  } catch (error) {
+    const status = error.status || (error.statusCode >= 400 && error.statusCode < 600 ? error.statusCode : 500);
+    console.error('AI Tutor request failed:', error.message);
+    return res.status(status).json({ error: status === 503 ? error.message : 'AI Tutor could not answer right now. Check the backend model configuration and try again.' });
+  }
+});
 router.get('/capabilities',async(req,res)=>{
   try{
     res.json({
