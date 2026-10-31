@@ -9,7 +9,7 @@ import { useLanguage } from './i18n/LanguageContext';
 
 function readView() {
   const path = window.location.hash.replace(/^#\/?/, '').split('/')[0];
-  return ['old', 'path', 'english', 'roadmap', 'dashboard', 'tutor', 'practice', 'projects', 'assessments', 'analytics', 'private'].includes(path) ? path : 'dashboard';
+  return ['old', 'path', 'english', 'roadmap', 'dashboard', 'tutor', 'practice', 'projects', 'assessments', 'analytics', 'private', 'curriculum'].includes(path) ? path : 'dashboard';
 }
 
 function Landing({ navigate, t }) {
@@ -99,6 +99,6 @@ export default function App() {
   return <div className="app-language-bar">
     
     <button type="button" onClick={() => navigate('home')} className="mobile-safe-bottom fixed bottom-2 right-3 z-50 flex items-center gap-2 rounded-full border border-white/20 bg-[#111b32] px-4 pt-3 text-xs font-bold text-white shadow-2xl transition hover:bg-indigo-600 sm:bottom-4 sm:right-4" aria-label={t('switch.mode')}><ArrowLeft size={15}/> {t('switch.mode')}</button>
-    {view === 'old' ? <LegacyApp/> : view === 'path' ? <EngineerPath/> : view === 'roadmap' || view === 'practice' ? <AIRoadmap/> : view === 'english' ? <EnglishSpeaking/> : <div className="min-h-screen bg-[#070d18] p-6 text-white"><div className="mx-auto max-w-2xl rounded-2xl border border-slate-700 bg-slate-900 p-6"><h1 className="text-2xl font-bold">{({tutor:'AI Tutor',projects:'Projects',assessments:'Quizzes & Assessments',analytics:'Progress & Analytics',private:'Private Mode'})[view] || 'Feature'}</h1><p className="mt-3 text-slate-400">This feature is planned for the next implementation phase. The existing Learning Roadmap is available now.</p><button onClick={()=>navigate('dashboard')} className="mt-5 rounded-xl bg-violet-600 px-4 py-2 font-bold">Back to Dashboard</button></div></div>}
+    {view === 'old' ? <LegacyApp/> : view === 'path' ? <EngineerPath/> : view === 'roadmap' || view === 'curriculum' || view === 'practice' ? <AIRoadmap/> : view === 'english' ? <EnglishSpeaking/> : <div className="min-h-screen bg-[#070d18] p-6 text-white"><div className="mx-auto max-w-2xl rounded-2xl border border-slate-700 bg-slate-900 p-6"><h1 className="text-2xl font-bold">{({tutor:'AI Tutor',projects:'Projects',assessments:'Quizzes & Assessments',analytics:'Progress & Analytics',private:'Private Mode'})[view] || 'Feature'}</h1><p className="mt-3 text-slate-400">This feature is planned for the next implementation phase. The existing Learning Roadmap is available now.</p><button onClick={()=>navigate('dashboard')} className="mt-5 rounded-xl bg-violet-600 px-4 py-2 font-bold">Back to Dashboard</button></div></div>}
   </div>;
 }
