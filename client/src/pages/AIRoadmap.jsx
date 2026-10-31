@@ -240,7 +240,7 @@ export default function AIRoadmap() {
     await saveTopic(topic.id, stages, true);
   };
 
-  return <div className="min-h-screen bg-[#f5f3ff] text-slate-900 lg:flex">
+  return <div className="roadmap-v2 min-h-screen bg-[#070d18] text-slate-100 lg:flex">
     <aside className={`${mobileMenu?'block':'hidden'} fixed inset-0 z-40 overflow-y-auto bg-[#15102d] px-3 py-4 text-white lg:static lg:block lg:min-h-screen lg:w-[305px] lg:shrink-0 lg:px-4 lg:py-5`}>
       <div className="mb-5 flex items-center justify-between gap-2 px-1"><div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-500"><BrainCircuit size={23}/></span><div><h1 className="text-lg font-extrabold">AI Roadmap</h1><p className="text-[10px] font-bold tracking-widest text-violet-300">7 PHASE · MASTER SYLLABUS</p></div></div><button onClick={()=>setMobileMenu(false)} className="rounded-lg p-2 hover:bg-white/10 lg:hidden" aria-label="Close menu"><PanelLeftClose size={19}/></button></div>
       <button onClick={showDashboard} className={`mb-4 flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-bold ${activeView==='dashboard'?'bg-violet-600 text-white':'text-slate-300 hover:bg-white/10'}`}><Activity size={18}/> Dashboard <span className="ml-auto text-xs">{overallPct}%</span></button>
