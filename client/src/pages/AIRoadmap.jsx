@@ -58,6 +58,25 @@ const EXAMPLE_BY_GROUP = {
 
 function getTopicRecord(progress, id) { return progress?.[id] || { completedStages:[], completed:false }; }
 function pct(n,d) { return d ? Math.round(n / d * 100) : 0; }
+const STUDY_TIME_KEY = 'ai-skillforge-study-time-v1';
+function readStudyTime() {
+  try {
+    const value = JSON.parse(window.localStorage.getItem(STUDY_TIME_KEY) || '{}');
+    return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  } catch { return {}; }
+}
+function localDayKey(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth()+1).padStart(2,'0');
+  const day = String(date.getDate()).padStart(2,'0');
+  return year + '-' + month + '-' + day;
+}
+function formatStudyTime(seconds) {
+  const safe = Math.max(0,Math.floor(seconds || 0));
+  const hours = Math.floor(safe/3600);
+  const minutes = Math.floor((safe%3600)/60);
+  return hours ? hours + 'h ' + minutes + 'm' : minutes + 'm';
+}
 function Bar({ value }) { return <div className="h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-gradient-to-r from-violet-600 to-indigo-500 transition-all" style={{width:`${value}%`}}/></div>; }
 
 export default function AIRoadmap() {
@@ -85,6 +104,8 @@ export default function AIRoadmap() {
   const [selectedTaskIndex, setSelectedTaskIndex] = useState(0);
   const [taskCheckResult, setTaskCheckResult] = useState(null);
   const [notesSaveState, setNotesSaveState] = useState('saved');
+  const [studySecondsToday, setStudySecondsToday] = useState(() => Number(readStudyTime()[localDayKey()]) || 0);
+  const [studyTimeByDay, setStudyTimeByDay] = useState(() => readStudyTime());
 
   const load = useCallback(async () => {
     try {
@@ -200,6 +221,26 @@ export default function AIRoadmap() {
     }, 1200);
     return () => window.clearTimeout(timer);
   }, [loaded, topic?.id, learningNotes, taskAnswer]);
+  useEffect(() => {
+    if (!loaded || activeView !== 'lesson') return undefined;
+    let lastSavedElapsed = 0;
+    const startedAt = Date.now();
+    const flush = () => {
+      const elapsed = Math.floor((Date.now()-startedAt)/1000);
+      const delta = elapsed-lastSavedElapsed;
+      if (delta <= 0) return;
+      lastSavedElapsed = elapsed;
+      const key = localDayKey();
+      setStudyTimeByDay(previous => {
+        const next = {...previous,[key]:(Number(previous[key])||0)+delta};
+        try { window.localStorage.setItem(STUDY_TIME_KEY,JSON.stringify(next)); } catch {}
+        return next;
+      });
+      setStudySecondsToday(previous => previous+delta);
+    };
+    const timer = window.setInterval(flush,15000);
+    return () => { window.clearInterval(timer); flush(); };
+  }, [loaded,activeView]);
   const allDone = allTopics.filter(t => getTopicRecord(progress,t.id).completed).length;
   const overallPct = pct(allDone, allTopics.length);
   const analytics = useMemo(() => {
@@ -211,10 +252,30 @@ export default function AIRoadmap() {
     const stageCount = records.reduce((sum,{record}) => sum + (record.completedStages?.length || 0),0);
     const weakTopics = quizRecords.filter(({record}) => Number(record.quizScore) < Number(record.quizTotal))
       .sort((a,b) => (Number(a.record.quizScore)/Number(a.record.quizTotal)) - (Number(b.record.quizScore)/Number(b.record.quizTotal))).slice(0,5);
+    const dayEntries = Object.entries(studyTimeByDay || {});
+    const todayKey = localDayKey();
+    const todaySeconds = Number(studyTimeByDay?.[todayKey]) || 0;
+    const now = new Date();
+    const startWeek = new Date(now); startWeek.setHours(0,0,0,0); startWeek.setDate(startWeek.getDate()-6);
+    const startMonth = new Date(now.getFullYear(),now.getMonth(),1);
+    const sumSince = start => dayEntries.reduce((sum,[key,value]) => {
+      const date = new Date(key + 'T00:00:00');
+      return date >= start && date <= now ? sum + (Number(value)||0) : sum;
+    },0);
+    const weeklySeconds = sumSince(startWeek);
+    const monthlySeconds = sumSince(startMonth);
+    const activeDates = new Set(dayEntries.filter(([,value]) => Number(value)>0).map(([key])=>key));
+    let streak = 0;
+    for (let offset=0; offset<366; offset++) {
+      const date = new Date(now); date.setDate(date.getDate()-offset);
+      if (activeDates.has(localDayKey(date))) streak++;
+      else if (offset===0) continue;
+      else break;
+    }
     const recentlyCompleted = records.filter(({record}) => record.completed && record.completedAt)
       .sort((a,b) => new Date(b.record.completedAt).getTime() - new Date(a.record.completedAt).getTime()).slice(0,5);
-    return { openedCount:opened.length, quizAttempts, quizAverage, stageCount, stagePercent:pct(stageCount,allTopics.length * STAGES.length), weakTopics, recentlyCompleted };
-  }, [allTopics, progress]);
+    return { openedCount:opened.length, quizAttempts, quizAverage, stageCount, stagePercent:pct(stageCount,allTopics.length * STAGES.length), weakTopics, recentlyCompleted, todaySeconds, weeklySeconds, monthlySeconds, streak };
+  }, [allTopics, progress, studyTimeByDay]);
   const phaseStats = useMemo(() => Object.fromEntries(AI_PHASES.map(phase => {
     const topics = phase.groups.flatMap(g => g.sections.flatMap(s => s.topics.map(title => allTopics.find(t => t.phaseId===phase.id && t.groupId===g.id && t.sectionTitle===s.title && t.title===title)).filter(Boolean)));
     const done = topics.filter(t => getTopicRecord(progress,t.id).completed).length;
@@ -322,6 +383,13 @@ export default function AIRoadmap() {
           <section className="mb-5 rounded-2xl border border-violet-100 bg-white p-5 shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-[.18em] text-violet-600">LEARNING ANALYTICS</p><h3 className="mt-1 text-xl font-black text-slate-900">Your study performance</h3><p className="mt-1 text-xs text-slate-500">Calculated from saved lesson progress and quiz results.</p></div><span className="rounded-xl bg-violet-50 px-3 py-2 text-xs font-bold text-violet-800">Personal dashboard</span></div>
             <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="rounded-xl bg-slate-50 p-4"><p className="text-[10px] font-bold tracking-wider text-slate-500">STUDY TIME TODAY</p><p className="mt-1 text-2xl font-black text-slate-900">{formatStudyTime(analytics.todaySeconds)}</p><p className="mt-1 text-[10px] text-slate-500">Time spent in lesson view</p></div>
+              <div className="rounded-xl bg-slate-50 p-4"><p className="text-[10px] font-bold tracking-wider text-slate-500">LAST 7 DAYS</p><p className="mt-1 text-2xl font-black text-slate-900">{formatStudyTime(analytics.weeklySeconds)}</p><p className="mt-1 text-[10px] text-slate-500">Recorded lesson-view time</p></div>
+              <div className="rounded-xl bg-slate-50 p-4"><p className="text-[10px] font-bold tracking-wider text-slate-500">THIS MONTH</p><p className="mt-1 text-2xl font-black text-slate-900">{formatStudyTime(analytics.monthlySeconds)}</p><p className="mt-1 text-[10px] text-slate-500">Recorded lesson-view time</p></div>
+              <div className="rounded-xl bg-slate-50 p-4"><p className="text-[10px] font-bold tracking-wider text-slate-500">STUDY STREAK</p><p className="mt-1 text-2xl font-black text-slate-900">{analytics.streak} days</p><p className="mt-1 text-[10px] text-slate-500">Consecutive days with lesson time</p></div>
+            </div>
+            <div className="mt-3 rounded-xl border border-violet-100 bg-violet-50/60 p-3 text-[11px] leading-5 text-violet-900">Study time is measured while a lesson is open and this tab is active. Time is stored in this browser on this device; it is not synced to your account or another device.</div>
+
               <div className="rounded-xl bg-slate-50 p-4"><p className="text-[10px] font-bold tracking-wider text-slate-500">TOPICS STARTED</p><p className="mt-1 text-2xl font-black text-slate-900">{analytics.openedCount}</p><p className="mt-1 text-[10px] text-slate-500">Topics with saved activity</p></div>
               <div className="rounded-xl bg-slate-50 p-4"><p className="text-[10px] font-bold tracking-wider text-slate-500">QUIZ AVERAGE</p><p className="mt-1 text-2xl font-black text-slate-900">{analytics.quizAttempts ? analytics.quizAverage + '%' : '—'}</p><p className="mt-1 text-[10px] text-slate-500">{analytics.quizAttempts} saved quiz results</p></div>
               <div className="rounded-xl bg-slate-50 p-4"><p className="text-[10px] font-bold tracking-wider text-slate-500">STAGE COMPLETION</p><p className="mt-1 text-2xl font-black text-slate-900">{analytics.stagePercent}%</p><p className="mt-1 text-[10px] text-slate-500">{analytics.stageCount} / {allTopics.length * STAGES.length} stages</p></div>
