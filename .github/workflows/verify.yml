@@ -1,7 +1,7 @@
 name: SkillForge checks
 on:
   push:
-    branches: [main, feature/offline-study-reminders-20261016]
+    branches: [main, feature/offline-study-reminders-20261016, feature/ai-skillforge-2.0]
   pull_request:
 
 jobs:

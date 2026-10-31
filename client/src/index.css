@@ -62,3 +62,19 @@ main,section,article{min-width:0;overflow-wrap:anywhere}
   .app-language-bar>.language-switcher{margin:8px 8px 6px}
   .app-language-bar>.portal-shell .relative.mx-auto{padding-top:1rem}
 }
+
+
+/* AI SkillForge 2.0 — roadmap dark learning workspace */
+.roadmap-v2{background:radial-gradient(ellipse at 75% 0%,rgba(76,55,170,.16),transparent 42%),#070d18!important;color:#e5e7eb!important}
+.roadmap-v2 main{color:#e5e7eb}
+.roadmap-v2 main section,.roadmap-v2 main article{background-color:#101a2b!important;border-color:#26344c!important;color:#e5e7eb}
+.roadmap-v2 main [class*="bg-white"]{background-color:#111d30!important;color:#e5e7eb}
+.roadmap-v2 main [class*="bg-[#f5f3ff]"]{background-color:#070d18!important}
+.roadmap-v2 main [class*="text-slate-900"],.roadmap-v2 main [class*="text-slate-800"],.roadmap-v2 main [class*="text-slate-700"]{color:#e2e8f0!important}
+.roadmap-v2 main [class*="text-slate-600"],.roadmap-v2 main [class*="text-slate-500"]{color:#9aa9bf!important}
+.roadmap-v2 main [class*="border-violet-100"],.roadmap-v2 main [class*="border-slate-200"]{border-color:#293852!important}
+.roadmap-v2 main [class*="bg-violet-50"]{background-color:#211b40!important;color:#ddd6fe!important}
+.roadmap-v2 main textarea,.roadmap-v2 main input,.roadmap-v2 main select{background-color:#0b1423!important;color:#f8fafc!important;border-color:#34445e!important}
+.roadmap-v2 main pre,.roadmap-v2 main code{color:#dbeafe}
+.roadmap-v2 main button:focus-visible,.roadmap-v2 aside button:focus-visible{outline:2px solid #67e8f9;outline-offset:2px}
+@media(max-width:1023px){.roadmap-v2 aside{box-shadow:20px 0 60px #0009}.roadmap-v2 main{padding-bottom:calc(5rem + env(safe-area-inset-bottom,0px))}}
