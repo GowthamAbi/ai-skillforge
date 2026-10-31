@@ -1,125 +1,85 @@
-import { useEffect, useState } from 'react';
-import { ArrowLeft, Beaker, BookOpen, BrainCircuit, ChartNoAxesCombined, ClipboardList, FlaskConical, Plus, Save, Sparkles, Trash2 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { ArrowLeft, Beaker, BookOpen, BrainCircuit, ChartNoAxesCombined, ClipboardList, Database, FileText, FlaskConical, Plus, Save, Search, Sparkles, Trash2, X, Microscope, NotebookPen, Layers3 } from 'lucide-react';
 
 const STORAGE_KEY = 'ai-skillforge-research-lab-v1';
-const emptyExperiment = { title:'', question:'', dataset:'', baseline:'', metric:'', notes:'' };
-
-function readExperiments() {
-  try {
-    const saved = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || '[]');
-    return Array.isArray(saved) ? saved : [];
-  } catch { return []; }
-}
-
+const PAPER_KEY = 'ai-skillforge-research-papers-v1';
+const DATASET_KEY = 'ai-skillforge-research-datasets-v1';
+const NOTE_KEY = 'ai-skillforge-research-notes-v1';
+const emptyExperiment = { title:'', question:'', area:'Machine Learning', dataset:'', baseline:'', model:'', metric:'Accuracy', score:'', notes:'' };
+const emptyPaper = { title:'', authors:'', year:'', url:'', summary:'', status:'To read' };
+const emptyDataset = { name:'', source:'', rows:'', columns:'', target:'', notes:'' };
+const tabs = [
+  {id:'overview',label:'Overview',icon:ChartNoAxesCombined},
+  {id:'papers',label:'Paper Library',icon:FileText},
+  {id:'datasets',label:'Datasets',icon:Database},
+  {id:'experiments',label:'Experiments',icon:Beaker},
+  {id:'notes',label:'Research Notes',icon:NotebookPen}
+];
 const workflow = [
   { title:'01 · Research question', detail:'Define the problem, why it matters, and a question you can test.', icon:BookOpen },
   { title:'02 · Dataset and baseline', detail:'Record the data source, target, features, and a simple baseline.', icon:ClipboardList },
   { title:'03 · Run experiments', detail:'Change one factor at a time and keep reproducible notes.', icon:Beaker },
-  { title:'04 · Evaluate results', detail:'Compare suitable metrics, inspect errors, and note limitations.', icon:ChartNoAxesCombined }
+  { title:'04 · Evaluate results', detail:'Compare metrics, inspect errors, and record limitations.', icon:ChartNoAxesCombined }
 ];
+const starterTopics = [
+  {name:'Machine Learning',detail:'Regression, classification, clustering and model evaluation',tag:'ML'},
+  {name:'Deep Learning',detail:'Neural networks, CNNs, RNNs and transformer architectures',tag:'DL'},
+  {name:'Natural Language Processing',detail:'Text processing, embeddings, language models and evaluation',tag:'NLP'},
+  {name:'Generative AI',detail:'Prompting, RAG, fine-tuning and AI application evaluation',tag:'GenAI'}
+];
+function readList(key) {
+  try { const value = JSON.parse(window.localStorage.getItem(key) || '[]'); return Array.isArray(value) ? value : []; }
+  catch { return []; }
+}
+function Panel({children,className=''}) { return <section className={'rounded-3xl border border-slate-700 bg-[#101a2b] p-5 sm:p-6 '+className}>{children}</section>; }
+function Field({label,children}) { return <label className="block text-xs font-semibold text-slate-300">{label}{children}</label>; }
+const inputClass = 'mt-2 w-full rounded-xl border border-slate-600 bg-[#091323] px-3 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-fuchsia-400';
+function Metric({label,value,icon:Icon}) { return <div className="rounded-2xl border border-slate-800 bg-[#101a2b] p-4"><div className="flex items-center justify-between text-slate-400"><span className="text-xs">{label}</span><Icon size={18} className="text-fuchsia-300"/></div><div className="mt-3 text-2xl font-black text-white">{value}</div></div>; }
 
 export default function AIResearchLab() {
-  const [experiments, setExperiments] = useState(readExperiments);
-  const [form, setForm] = useState(emptyExperiment);
-  const [notice, setNotice] = useState('');
-
-  useEffect(() => {
-    try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(experiments)); }
-    catch { setNotice('Could not save in this browser. Check available storage.'); }
-  }, [experiments]);
-
-  const update = (key, value) => setForm(current => ({ ...current, [key]: value }));
-  const saveExperiment = event => {
-    event.preventDefault();
-    if (!form.title.trim() || !form.question.trim()) {
-      setNotice('Add an experiment title and research question first.');
-      return;
-    }
-    setExperiments(current => [{ ...form, id: Date.now(), createdAt: new Date().toISOString() }, ...current]);
-    setForm(emptyExperiment);
-    setNotice('Experiment saved in this browser.');
-  };
-  const removeExperiment = id => setExperiments(current => current.filter(item => item.id !== id));
-
-  return (
-    <main className="min-h-screen bg-[#070d18] px-4 py-7 text-white sm:px-7 sm:py-10">
-      <div className="mx-auto max-w-6xl">
-        <header className="mb-8 flex flex-wrap items-center gap-4">
-          <span className="grid h-14 w-14 place-items-center rounded-2xl border border-fuchsia-300/20 bg-fuchsia-500/10 text-fuchsia-200"><FlaskConical size={29}/></span>
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-bold tracking-[.2em] text-fuchsia-300">05 · EXPERIMENT AND DISCOVER</p>
-            <h1 className="mt-1 text-3xl font-black sm:text-4xl">AI Research Lab</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">Plan practical AI experiments, compare approaches, record findings, and build evidence for your projects.</p>
-          </div>
-        </header>
-
-        <section className="mb-7 rounded-3xl border border-fuchsia-400/20 bg-gradient-to-br from-fuchsia-950/50 via-[#15162e] to-[#101b31] p-5 sm:p-7">
-          <div className="flex items-center gap-2 text-fuchsia-200"><Sparkles size={18}/><span className="text-xs font-bold tracking-widest">RESEARCH WORKFLOW</span></div>
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {workflow.map(({ title, detail, icon: Icon }) => <article key={title} className="rounded-2xl border border-white/10 bg-black/15 p-4">
-              <Icon size={21} className="text-fuchsia-200"/>
-              <h2 className="mt-3 text-sm font-bold">{title}</h2>
-              <p className="mt-2 text-xs leading-5 text-slate-400">{detail}</p>
-            </article>)}
-          </div>
-        </section>
-
-        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,.8fr)]">
-          <form onSubmit={saveExperiment} className="rounded-3xl border border-slate-700 bg-[#101a2b] p-5 sm:p-6">
-            <div className="mb-5 flex items-center gap-2"><Plus size={19} className="text-fuchsia-300"/><h2 className="text-lg font-extrabold">Create an experiment</h2></div>
-            <div className="space-y-4">
-              <label className="block text-xs font-semibold text-slate-300">Experiment title *
-                <input value={form.title} onChange={e=>update('title',e.target.value)} placeholder="e.g. Predict elastic quality defects" className="mt-2 w-full rounded-xl border border-slate-600 bg-[#091323] px-3 py-3 text-sm text-white outline-none focus:border-fuchsia-400"/>
-              </label>
-              <label className="block text-xs font-semibold text-slate-300">Research question *
-                <textarea value={form.question} onChange={e=>update('question',e.target.value)} rows={3} placeholder="What problem are you trying to investigate?" className="mt-2 w-full rounded-xl border border-slate-600 bg-[#091323] px-3 py-3 text-sm text-white outline-none focus:border-fuchsia-400"/>
-              </label>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <label className="block text-xs font-semibold text-slate-300">Dataset / data source
-                  <input value={form.dataset} onChange={e=>update('dataset',e.target.value)} placeholder="CSV, public dataset, source…" className="mt-2 w-full rounded-xl border border-slate-600 bg-[#091323] px-3 py-3 text-sm text-white outline-none focus:border-fuchsia-400"/>
-                </label>
-                <label className="block text-xs font-semibold text-slate-300">Baseline approach
-                  <input value={form.baseline} onChange={e=>update('baseline',e.target.value)} placeholder="e.g. Logistic Regression" className="mt-2 w-full rounded-xl border border-slate-600 bg-[#091323] px-3 py-3 text-sm text-white outline-none focus:border-fuchsia-400"/>
-                </label>
-                <label className="block text-xs font-semibold text-slate-300 sm:col-span-2">Evaluation metric
-                  <input value={form.metric} onChange={e=>update('metric',e.target.value)} placeholder="e.g. F1-score, MAE, accuracy" className="mt-2 w-full rounded-xl border border-slate-600 bg-[#091323] px-3 py-3 text-sm text-white outline-none focus:border-fuchsia-400"/>
-                </label>
-              </div>
-              <label className="block text-xs font-semibold text-slate-300">Notes and expected outcome
-                <textarea value={form.notes} onChange={e=>update('notes',e.target.value)} rows={3} placeholder="Hypothesis, experiment settings, observations…" className="mt-2 w-full rounded-xl border border-slate-600 bg-[#091323] px-3 py-3 text-sm text-white outline-none focus:border-fuchsia-400"/>
-              </label>
-              <button type="submit" className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-fuchsia-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-fuchsia-500"><Save size={16}/> Save experiment</button>
-              {notice && <p role="status" className="text-xs text-fuchsia-200">{notice}</p>}
-            </div>
-          </form>
-
-          <section className="rounded-3xl border border-slate-700 bg-[#101a2b] p-5 sm:p-6">
-            <div className="flex items-center justify-between gap-3">
-              <div><p className="text-xs font-bold tracking-widest text-slate-400">YOUR WORKSPACE</p><h2 className="mt-1 text-lg font-extrabold">Saved experiments</h2></div>
-              <span className="rounded-full bg-fuchsia-500/10 px-3 py-1 text-xs font-bold text-fuchsia-200">{experiments.length} saved</span>
-            </div>
-            {experiments.length === 0 ? <div className="mt-5 rounded-2xl border border-dashed border-slate-600 p-6 text-center">
-              <BrainCircuit size={30} className="mx-auto text-slate-500"/>
-              <p className="mt-3 text-sm font-semibold text-slate-300">No experiments yet</p>
-              <p className="mt-1 text-xs leading-5 text-slate-500">Create your first research plan. It will appear here.</p>
-            </div> : <div className="mt-4 space-y-3">
-              {experiments.map(item => <article key={item.id} className="rounded-2xl border border-slate-700 bg-[#0b1423] p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0"><h3 className="break-words text-sm font-bold text-white">{item.title}</h3><p className="mt-2 whitespace-pre-wrap text-xs leading-5 text-slate-400">{item.question}</p></div>
-                  <button type="button" onClick={()=>removeExperiment(item.id)} aria-label={'Delete '+item.title} className="rounded-lg p-2 text-slate-500 hover:bg-rose-500/10 hover:text-rose-300"><Trash2 size={16}/></button>
-                </div>
-                {(item.dataset || item.baseline || item.metric) && <div className="mt-3 space-y-1 border-t border-slate-700 pt-3 text-[11px] text-slate-400">
-                  {item.dataset && <p><b className="text-slate-300">Dataset:</b> {item.dataset}</p>}
-                  {item.baseline && <p><b className="text-slate-300">Baseline:</b> {item.baseline}</p>}
-                  {item.metric && <p><b className="text-slate-300">Metric:</b> {item.metric}</p>}
-                </div>}
-                {item.notes && <p className="mt-3 whitespace-pre-wrap text-xs leading-5 text-slate-400">{item.notes}</p>}
-              </article>)}
-            </div>}
-            <p className="mt-5 border-t border-slate-700 pt-4 text-[11px] leading-5 text-slate-500">Saved in this browser only. This workspace is not yet synced to your account or MongoDB.</p>
-          </section>
-        </div>
-      </div>
-    </main>
-  );
+  const [experiments,setExperiments]=useState(()=>readList(STORAGE_KEY));
+  const [papers,setPapers]=useState(()=>readList(PAPER_KEY));
+  const [datasets,setDatasets]=useState(()=>readList(DATASET_KEY));
+  const [notes,setNotes]=useState(()=>readList(NOTE_KEY));
+  const [tab,setTab]=useState('overview');
+  const [form,setForm]=useState(emptyExperiment);
+  const [paper,setPaper]=useState(emptyPaper);
+  const [dataset,setDataset]=useState(emptyDataset);
+  const [note,setNote]=useState('');
+  const [search,setSearch]=useState('');
+  const [notice,setNotice]=useState('');
+  useEffect(()=>{ try { window.localStorage.setItem(STORAGE_KEY,JSON.stringify(experiments)); } catch { setNotice('Browser storage is full. Export or remove some records.'); } },[experiments]);
+  useEffect(()=>{ try { window.localStorage.setItem(PAPER_KEY,JSON.stringify(papers)); } catch { setNotice('Could not save paper library in this browser.'); } },[papers]);
+  useEffect(()=>{ try { window.localStorage.setItem(DATASET_KEY,JSON.stringify(datasets)); } catch { setNotice('Could not save dataset library in this browser.'); } },[datasets]);
+  useEffect(()=>{ try { window.localStorage.setItem(NOTE_KEY,JSON.stringify(notes)); } catch { setNotice('Could not save notes in this browser.'); } },[notes]);
+  const update=(key,value)=>setForm(current=>({...current,[key]:value}));
+  const saveExperiment=e=>{e.preventDefault();if(!form.title.trim()||!form.question.trim()){setNotice('Experiment title and research question are required.');return;}setExperiments(current=>[{...form,id:Date.now(),createdAt:new Date().toISOString()},...current]);setForm(emptyExperiment);setNotice('Experiment saved on this device.');};
+  const savePaper=e=>{e.preventDefault();if(!paper.title.trim()){setNotice('Enter a paper title first.');return;}setPapers(current=>[{...paper,id:Date.now(),createdAt:new Date().toISOString()},...current]);setPaper(emptyPaper);setNotice('Paper added to your library.');};
+  const saveDataset=e=>{e.preventDefault();if(!dataset.name.trim()){setNotice('Enter a dataset name first.');return;}setDatasets(current=>[{...dataset,id:Date.now(),createdAt:new Date().toISOString()},...current]);setDataset(emptyDataset);setNotice('Dataset added to your library.');};
+  const saveNote=e=>{e.preventDefault();if(!note.trim())return;setNotes(current=>[{id:Date.now(),text:note.trim(),createdAt:new Date().toISOString()},...current]);setNote('');setNotice('Research note saved.');};
+  const remove=(setter,id)=>setter(current=>current.filter(item=>item.id!==id));
+  const filteredExperiments=useMemo(()=>experiments.filter(x=>(x.title+' '+x.question+' '+x.area).toLowerCase().includes(search.toLowerCase())),[experiments,search]);
+  const avgScore=useMemo(()=>{const scores=experiments.map(x=>Number(x.score)).filter(x=>Number.isFinite(x)&&x>0);return scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'—';},[experiments]);
+  const exportData=()=>{const payload={experiments,papers,datasets,notes,exportedAt:new Date().toISOString()};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='ai-research-lab-backup.json';a.click();URL.revokeObjectURL(url);};
+  return <main className="min-h-screen bg-[#070d18] px-4 py-7 text-white sm:px-7 sm:py-10">
+    <div className="mx-auto max-w-6xl">
+      <header className="mb-7 flex flex-wrap items-center gap-4">
+        <span className="grid h-14 w-14 place-items-center rounded-2xl border border-fuchsia-300/20 bg-fuchsia-500/10 text-fuchsia-200"><FlaskConical size={29}/></span>
+        <div className="min-w-0 flex-1"><p className="text-xs font-bold tracking-[.2em] text-fuchsia-300">05 · EXPERIMENT AND DISCOVER</p><h1 className="mt-1 text-3xl font-black sm:text-4xl">AI Research Lab</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">A practical workspace to organise research papers, datasets, experiments, results and research notes.</p></div>
+        <button onClick={exportData} className="rounded-xl border border-fuchsia-300/30 bg-fuchsia-500/10 px-4 py-2.5 text-xs font-bold text-fuchsia-200 hover:bg-fuchsia-500/20">Export backup</button>
+      </header>
+      <nav className="mb-6 flex gap-2 overflow-x-auto rounded-2xl border border-slate-800 bg-[#0c1524] p-2">{tabs.map(({id,label,icon:Icon})=><button key={id} onClick={()=>setTab(id)} className={'flex shrink-0 items-center gap-2 rounded-xl px-4 py-3 text-xs font-bold transition '+(tab===id?'bg-fuchsia-600 text-white shadow-lg shadow-fuchsia-950/40':'text-slate-400 hover:bg-slate-800 hover:text-white')}><Icon size={16}/>{label}</button>)}</nav>
+      {notice&&<div role="status" className="mb-5 flex items-center justify-between rounded-xl border border-fuchsia-400/20 bg-fuchsia-500/10 px-4 py-3 text-xs text-fuchsia-100">{notice}<button onClick={()=>setNotice('')} aria-label="Dismiss message"><X size={15}/></button></div>}
+      {tab==='overview'&&<div className="space-y-6">
+        <section className="rounded-3xl border border-fuchsia-400/20 bg-gradient-to-br from-fuchsia-950/50 via-[#15162e] to-[#101b31] p-5 sm:p-7"><div className="flex items-center gap-2 text-fuchsia-200"><Sparkles size={18}/><span className="text-xs font-bold tracking-widest">RESEARCH WORKFLOW</span></div><div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{workflow.map(({title,detail,icon:Icon})=><article key={title} className="rounded-2xl border border-white/10 bg-black/15 p-4"><Icon size={21} className="text-fuchsia-200"/><h2 className="mt-3 text-sm font-bold">{title}</h2><p className="mt-2 text-xs leading-5 text-slate-400">{detail}</p></article>)}</div></section>
+        <div className="grid grid-cols-2 gap-3 xl:grid-cols-4"><Metric label="Experiments" value={experiments.length} icon={Beaker}/><Metric label="Research papers" value={papers.length} icon={FileText}/><Metric label="Datasets saved" value={datasets.length} icon={Database}/><Metric label="Average recorded score" value={avgScore} icon={ChartNoAxesCombined}/></div>
+        <div className="grid gap-5 lg:grid-cols-[1.15fr_.85fr]"><Panel><div className="flex items-center justify-between"><div><h2 className="text-lg font-extrabold">Research areas</h2><p className="mt-1 text-xs text-slate-400">Choose a field to organise your investigation.</p></div><Microscope className="text-fuchsia-300" size={23}/></div><div className="mt-4 grid gap-3 sm:grid-cols-2">{starterTopics.map(item=><button key={item.tag} onClick={()=>{setForm(v=>({...v,area:item.name}));setTab('experiments');}} className="rounded-2xl border border-slate-700 bg-[#0b1423] p-4 text-left hover:border-fuchsia-400/50"><span className="rounded-lg bg-fuchsia-500/15 px-2 py-1 text-[10px] font-black text-fuchsia-200">{item.tag}</span><h3 className="mt-3 text-sm font-bold">{item.name}</h3><p className="mt-1 text-xs leading-5 text-slate-400">{item.detail}</p></button>)}</div></Panel><Panel><h2 className="text-lg font-extrabold">Recent activity</h2><div className="mt-4 space-y-3">{[...experiments.slice(0,3).map(x=>({label:x.title,type:'Experiment',date:x.createdAt})),...papers.slice(0,2).map(x=>({label:x.title,type:'Paper',date:x.createdAt}))].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5).map((x,i)=><div key={i} className="flex items-start gap-3 border-b border-slate-800 pb-3 last:border-0"><span className="mt-1 h-2 w-2 rounded-full bg-fuchsia-400"/><div className="min-w-0 flex-1"><p className="break-words text-xs font-semibold">{x.label}</p><p className="mt-1 text-[10px] text-slate-500">{x.type} · {new Date(x.date).toLocaleDateString()}</p></div></div>)}{!experiments.length&&!papers.length&&<p className="text-xs text-slate-500">Your new research activity will appear here.</p>}</div></Panel></div>
+      </div>}
+      {tab==='papers'&&<div className="grid items-start gap-5 lg:grid-cols-[.85fr_1.15fr]"><Panel><h2 className="mb-4 flex items-center gap-2 text-lg font-extrabold"><Plus size={18} className="text-fuchsia-300"/> Add research paper</h2><form onSubmit={savePaper} className="space-y-3"><Field label="Paper title *"><input className={inputClass} value={paper.title} onChange={e=>setPaper({...paper,title:e.target.value})} placeholder="Research paper title"/></Field><Field label="Authors"><input className={inputClass} value={paper.authors} onChange={e=>setPaper({...paper,authors:e.target.value})} placeholder="Author names"/></Field><div className="grid grid-cols-2 gap-3"><Field label="Year"><input className={inputClass} value={paper.year} onChange={e=>setPaper({...paper,year:e.target.value})} placeholder="2026"/></Field><Field label="Reading status"><select className={inputClass} value={paper.status} onChange={e=>setPaper({...paper,status:e.target.value})}><option>To read</option><option>Reading</option><option>Reviewed</option></select></Field></div><Field label="Paper URL"><input className={inputClass} value={paper.url} onChange={e=>setPaper({...paper,url:e.target.value})} placeholder="https://..."/></Field><Field label="Abstract / your summary"><textarea className={inputClass} rows={4} value={paper.summary} onChange={e=>setPaper({...paper,summary:e.target.value})} placeholder="Main idea, method, results and limitations"/></Field><button className="flex w-full items-center justify-center gap-2 rounded-xl bg-fuchsia-600 px-4 py-3 text-sm font-bold"><Save size={16}/> Save paper</button></form></Panel><Panel><h2 className="text-lg font-extrabold">Paper library <span className="ml-2 text-xs text-slate-500">{papers.length} saved</span></h2><div className="mt-4 space-y-3">{papers.map(x=><article key={x.id} className="rounded-xl border border-slate-700 bg-[#0b1423] p-4"><div className="flex justify-between gap-3"><div className="min-w-0"><h3 className="text-sm font-bold">{x.title}</h3><p className="mt-1 text-xs text-slate-400">{[x.authors,x.year,x.status].filter(Boolean).join(' · ')}</p></div><button onClick={()=>remove(setPapers,x.id)} aria-label="Delete paper" className="text-slate-500 hover:text-rose-300"><Trash2 size={16}/></button></div>{x.summary&&<p className="mt-3 whitespace-pre-wrap text-xs leading-5 text-slate-400">{x.summary}</p>}{x.url&&<a href={x.url} target="_blank" rel="noreferrer" className="mt-3 inline-block text-xs font-bold text-fuchsia-300 underline">Open paper</a>}</article>)}{!papers.length&&<p className="rounded-xl border border-dashed border-slate-700 p-8 text-center text-xs text-slate-500">No papers saved yet. Add your first paper.</p>}</div></Panel></div>}
+      {tab==='datasets'&&<div className="grid items-start gap-5 lg:grid-cols-[.85fr_1.15fr]"><Panel><h2 className="mb-4 flex items-center gap-2 text-lg font-extrabold"><Plus size={18} className="text-fuchsia-300"/> Register a dataset</h2><form onSubmit={saveDataset} className="space-y-3"><Field label="Dataset name *"><input className={inputClass} value={dataset.name} onChange={e=>setDataset({...dataset,name:e.target.value})} placeholder="e.g. Elastic production records"/></Field><Field label="Source / file path"><input className={inputClass} value={dataset.source} onChange={e=>setDataset({...dataset,source:e.target.value})} placeholder="CSV, Excel, Kaggle URL..."/></Field><div className="grid grid-cols-2 gap-3"><Field label="Rows"><input className={inputClass} value={dataset.rows} onChange={e=>setDataset({...dataset,rows:e.target.value})} placeholder="e.g. 1200"/></Field><Field label="Columns"><input className={inputClass} value={dataset.columns} onChange={e=>setDataset({...dataset,columns:e.target.value})} placeholder="e.g. 14"/></Field></div><Field label="Target column"><input className={inputClass} value={dataset.target} onChange={e=>setDataset({...dataset,target:e.target.value})} placeholder="What do you want to predict?"/></Field><Field label="Description / data quality notes"><textarea className={inputClass} rows={4} value={dataset.notes} onChange={e=>setDataset({...dataset,notes:e.target.value})} placeholder="Source, licence, missing values, limitations..."/></Field><button className="flex w-full items-center justify-center gap-2 rounded-xl bg-fuchsia-600 px-4 py-3 text-sm font-bold"><Save size={16}/> Save dataset</button></form></Panel><Panel><h2 className="text-lg font-extrabold">Dataset catalogue <span className="ml-2 text-xs text-slate-500">{datasets.length} saved</span></h2><div className="mt-4 space-y-3">{datasets.map(x=><article key={x.id} className="rounded-xl border border-slate-700 bg-[#0b1423] p-4"><div className="flex justify-between gap-3"><div><h3 className="text-sm font-bold">{x.name}</h3><p className="mt-1 text-xs text-slate-400">{x.source||'Source not specified'} · {x.rows||'—'} rows · {x.columns||'—'} columns</p></div><button onClick={()=>remove(setDatasets,x.id)} aria-label="Delete dataset" className="text-slate-500 hover:text-rose-300"><Trash2 size={16}/></button></div>{x.target&&<p className="mt-2 text-xs text-slate-300">Target: {x.target}</p>}{x.notes&&<p className="mt-2 whitespace-pre-wrap text-xs text-slate-500">{x.notes}</p>}</article>)}{!datasets.length&&<p className="rounded-xl border border-dashed border-slate-700 p-8 text-center text-xs text-slate-500">No datasets registered yet.</p>}</div></Panel></div>}
+      {tab==='experiments'&&<div className="grid items-start gap-5 lg:grid-cols-[.85fr_1.15fr]"><Panel><h2 className="mb-4 flex items-center gap-2 text-lg font-extrabold"><Plus size={18} className="text-fuchsia-300"/> Create model experiment</h2><form onSubmit={saveExperiment} className="space-y-3"><Field label="Experiment title *"><input className={inputClass} value={form.title} onChange={e=>update('title',e.target.value)} placeholder="e.g. Predict elastic quality defects"/></Field><Field label="Research question *"><textarea className={inputClass} value={form.question} onChange={e=>update('question',e.target.value)} rows={3} placeholder="What problem are you investigating?"/></Field><div className="grid grid-cols-2 gap-3"><Field label="Research area"><select className={inputClass} value={form.area} onChange={e=>update('area',e.target.value)}>{starterTopics.map(x=><option key={x.name}>{x.name}</option>)}</select></Field><Field label="Model / algorithm"><input className={inputClass} value={form.model} onChange={e=>update('model',e.target.value)} placeholder="Random Forest"/></Field></div><Field label="Dataset"><select className={inputClass} value={form.dataset} onChange={e=>update('dataset',e.target.value)}><option value="">Choose registered dataset</option>{datasets.map(x=><option key={x.id} value={x.name}>{x.name}</option>)}</select></Field><Field label="Baseline approach"><input className={inputClass} value={form.baseline} onChange={e=>update('baseline',e.target.value)} placeholder="Dummy classifier / Linear Regression"/></Field><div className="grid grid-cols-2 gap-3"><Field label="Evaluation metric"><select className={inputClass} value={form.metric} onChange={e=>update('metric',e.target.value)}>{['Accuracy','F1-score','Precision','Recall','MAE','RMSE','R²','AUC'].map(x=><option key={x}>{x}</option>)}</select></Field><Field label="Result score (optional)"><input className={inputClass} type="number" step="any" value={form.score} onChange={e=>update('score',e.target.value)} placeholder="e.g. 0.91"/></Field></div><Field label="Findings, settings and limitations"><textarea className={inputClass} rows={3} value={form.notes} onChange={e=>update('notes',e.target.value)} placeholder="Hyperparameters, observations, errors, next steps..."/></Field><button className="flex w-full items-center justify-center gap-2 rounded-xl bg-fuchsia-600 px-4 py-3 text-sm font-bold"><Save size={16}/> Save experiment</button></form></Panel><Panel><div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-lg font-extrabold">Experiment history</h2><p className="mt-1 text-xs text-slate-400">{experiments.length} saved experiments</p></div><div className="relative"><Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search experiments" className="w-full rounded-xl border border-slate-700 bg-[#091323] py-2 pl-9 pr-3 text-xs outline-none sm:w-52"/></div></div><div className="mt-4 space-y-3">{filteredExperiments.map(x=><article key={x.id} className="rounded-xl border border-slate-700 bg-[#0b1423] p-4"><div className="flex justify-between gap-3"><div className="min-w-0"><h3 className="text-sm font-bold">{x.title}</h3><p className="mt-1 text-xs text-slate-400">{x.area} · {x.model||'Model not set'} · {x.metric}: {x.score||'Not recorded'}</p></div><button onClick={()=>remove(setExperiments,x.id)} aria-label="Delete experiment" className="text-slate-500 hover:text-rose-300"><Trash2 size={16}/></button></div><p className="mt-3 whitespace-pre-wrap text-xs leading-5 text-slate-400">{x.question}</p>{x.notes&&<p className="mt-2 whitespace-pre-wrap text-xs text-slate-500">{x.notes}</p>}</article>)}{!filteredExperiments.length&&<p className="rounded-xl border border-dashed border-slate-700 p-8 text-center text-xs text-slate-500">No matching experiments. Create one to start tracking results.</p>}</div></Panel></div>}
+      {tab==='notes'&&<div className="grid items-start gap-5 lg:grid-cols-[.8fr_1.2fr]"><Panel><h2 className="mb-4 flex items-center gap-2 text-lg font-extrabold"><NotebookPen size={18} className="text-fuchsia-300"/> Research notebook</h2><form onSubmit={saveNote} className="space-y-3"><Field label="Observation / idea / next step"><textarea className={inputClass} rows={7} value={note} onChange={e=>setNote(e.target.value)} placeholder="Write your hypothesis, observation, meeting notes or next research step..."/></Field><button className="flex w-full items-center justify-center gap-2 rounded-xl bg-fuchsia-600 px-4 py-3 text-sm font-bold"><Save size={16}/> Save note</button></form><p className="mt-3 text-[11px] leading-5 text-slate-500">Notes are stored locally in this browser.</p></Panel><Panel><h2 className="text-lg font-extrabold">Saved notes <span className="ml-2 text-xs text-slate-500">{notes.length}</span></h2><div className="mt-4 space-y-3">{notes.map(x=><article key={x.id} className="rounded-xl border border-slate-700 bg-[#0b1423] p-4"><div className="flex items-start justify-between gap-3"><p className="whitespace-pre-wrap text-xs leading-6 text-slate-300">{x.text}</p><button onClick={()=>remove(setNotes,x.id)} aria-label="Delete note" className="text-slate-500 hover:text-rose-300"><Trash2 size={16}/></button></div><p className="mt-3 text-[10px] text-slate-500">{new Date(x.createdAt).toLocaleString()}</p></article>)}{!notes.length&&<p className="rounded-xl border border-dashed border-slate-700 p-8 text-center text-xs text-slate-500">Your research notes will appear here.</p>}</div></Panel></div>}
+      <footer className="mt-7 flex flex-wrap items-center justify-between gap-2 border-t border-slate-800 pt-5 text-[11px] text-slate-500"><span>AI SkillForge · AI Research Lab</span><span>Saved in this browser only · Not synced to MongoDB</span></footer>
+    </div>
+  </main>;
 }
