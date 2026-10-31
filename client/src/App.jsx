@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, ArrowRight, BookOpen, BrainCircuit, GraduationCap, Languages, Sparkles, Zap } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, BrainCircuit, GraduationCap, Languages, FlaskConical, Sparkles, Zap } from 'lucide-react';
 import LegacyApp from './LegacyApp';
 import EngineerPath from './pages/EngineerPath';
 import EnglishSpeaking from './pages/EnglishSpeaking';
 import AIRoadmap from './pages/AIRoadmap';
 import ForgeDashboard from './pages/ForgeDashboard';
+import AIResearchLab from './pages/AIResearchLab';
 import { useLanguage } from './i18n/LanguageContext';
 
 function readView() {
   const path = window.location.hash.replace(/^#\/?/, '').split('/')[0];
-  return ['old', 'path', 'english', 'roadmap', 'dashboard', 'tutor', 'practice', 'projects', 'assessments', 'analytics', 'private', 'curriculum'].includes(path) ? path : 'dashboard';
+  return ['old', 'path', 'english', 'roadmap', 'dashboard', 'tutor', 'practice', 'projects', 'assessments', 'analytics', 'private', 'curriculum', 'research'].includes(path) ? path : 'dashboard';
 }
 
 function Landing({ navigate, t }) {
@@ -29,7 +30,7 @@ function Landing({ navigate, t }) {
           <h1 className="text-3xl font-black leading-tight tracking-tight sm:text-6xl">{t('home.headline')} <span className="portal-gradient-text">{t('home.headline2')}</span></h1>
           <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-slate-400 sm:mt-6 sm:text-lg">{t('home.intro')}</p>
         </div>
-        <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4 md:gap-6">
+        <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5 md:gap-6">
           <button type="button" onClick={() => navigate('old')} className="portal-card portal-card-old group text-left">
             <span className="portal-card-shine" aria-hidden="true" />
             <span className="portal-icon portal-icon-cyan"><BookOpen size={35} strokeWidth={1.65}/></span>
@@ -65,6 +66,15 @@ function Landing({ navigate, t }) {
             <span className="mt-3 block max-w-sm text-sm leading-7 text-slate-400">{t('home.roadmap.description')}</span>
             <span className="mt-9 flex items-center justify-between border-t border-white/10 pt-5 text-sm font-bold text-violet-200">{t('home.roadmap.action')} <ArrowRight className="transition-transform group-hover:translate-x-1" size={20}/></span>
           </button>
+          <button type="button" onClick={() => navigate('research')} className="portal-card portal-card-research group text-left">
+            <span className="portal-card-shine" aria-hidden="true" />
+            <span className="absolute right-6 top-6 inline-flex items-center gap-1 rounded-full bg-fuchsia-500/20 px-3 py-1.5 text-[11px] font-bold text-fuchsia-200"><Sparkles size={12}/> NEW</span>
+            <span className="portal-icon portal-icon-research"><FlaskConical size={38} strokeWidth={1.65}/></span>
+            <span className="mt-7 block text-xs font-bold tracking-[.22em] text-fuchsia-300">{t('home.research.eyebrow')}</span>
+            <span className="mt-3 block text-3xl font-bold">{t('home.research.title')}</span>
+            <span className="mt-3 block max-w-sm text-sm leading-7 text-slate-400">{t('home.research.description')}</span>
+            <span className="mt-9 flex items-center justify-between border-t border-white/10 pt-5 text-sm font-bold text-fuchsia-200">{t('home.research.action')} <ArrowRight className="transition-transform group-hover:translate-x-1" size={20}/></span>
+          </button>
         </div>
         <footer className="mt-8 flex items-center justify-center gap-2 text-center text-xs text-slate-500 sm:mt-12 sm:text-sm"><GraduationCap className="shrink-0" size={17}/> {t('home.footer')}</footer>
       </div>
@@ -99,6 +109,6 @@ export default function App() {
   return <div className="app-language-bar">
     
     <button type="button" onClick={() => navigate('home')} className="mobile-safe-bottom fixed bottom-2 right-3 z-50 flex items-center gap-2 rounded-full border border-white/20 bg-[#111b32] px-4 pt-3 text-xs font-bold text-white shadow-2xl transition hover:bg-indigo-600 sm:bottom-4 sm:right-4" aria-label={t('switch.mode')}><ArrowLeft size={15}/> {t('switch.mode')}</button>
-    {view === 'old' ? <LegacyApp/> : view === 'path' ? <EngineerPath/> : view === 'roadmap' || view === 'curriculum' || view === 'practice' ? <AIRoadmap/> : view === 'english' ? <EnglishSpeaking/> : <div className="min-h-screen bg-[#070d18] p-6 text-white"><div className="mx-auto max-w-2xl rounded-2xl border border-slate-700 bg-slate-900 p-6"><h1 className="text-2xl font-bold">{({tutor:'AI Tutor',projects:'Projects',assessments:'Quizzes & Assessments',analytics:'Progress & Analytics',private:'Private Mode'})[view] || 'Feature'}</h1><p className="mt-3 text-slate-400">This feature is planned for the next implementation phase. The existing Learning Roadmap is available now.</p><button onClick={()=>navigate('dashboard')} className="mt-5 rounded-xl bg-violet-600 px-4 py-2 font-bold">Back to Dashboard</button></div></div>}
+    {view === 'old' ? <LegacyApp/> : view === 'path' ? <EngineerPath/> : view === 'roadmap' || view === 'curriculum' || view === 'practice' ? <AIRoadmap/> : view === 'english' ? <EnglishSpeaking/> : view === 'research' ? <AIResearchLab/> : <div className="min-h-screen bg-[#070d18] p-6 text-white"><div className="mx-auto max-w-2xl rounded-2xl border border-slate-700 bg-slate-900 p-6"><h1 className="text-2xl font-bold">{({tutor:'AI Tutor',projects:'Projects',assessments:'Quizzes & Assessments',analytics:'Progress & Analytics',private:'Private Mode'})[view] || 'Feature'}</h1><p className="mt-3 text-slate-400">This feature is planned for the next implementation phase. The existing Learning Roadmap is available now.</p><button onClick={()=>navigate('dashboard')} className="mt-5 rounded-xl bg-violet-600 px-4 py-2 font-bold">Back to Dashboard</button></div></div>}
   </div>;
 }
