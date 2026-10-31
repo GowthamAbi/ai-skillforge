@@ -16,7 +16,7 @@ export const AI_PHASES = [
       {title:'Data Handling',topics:['NumPy arrays and vectorization','Pandas Series and DataFrames','Missing values, duplicates, outliers','Data cleaning and transformation','Matplotlib and Seaborn visualizations']},
       {title:'Developer Tools',topics:['SQL: SELECT, WHERE, GROUP BY, JOIN','Git, GitHub, branches, commits','Linux terminal basics','APIs, JSON, HTTP fundamentals','Debugging, testing and readable code']}
     ]},
-    {id:'dataprep',title:'Data Cleaning & Data Processing',duration:'12 hours',sections:[
+    {id:'dataprep',title:'Data Cleaning & Data Processing Roadmap',duration:'12 hours',sections:[
       {title:'Pandas Data Inspection & EDA',topics:[
         'Data preparation workflow: raw data, validation, cleaning, transformation, and analysis',
         'Load CSV and Excel datasets with Pandas read_csv() and read_excel()',
