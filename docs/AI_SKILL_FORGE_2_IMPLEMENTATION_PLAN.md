@@ -43,7 +43,7 @@
 - Preserve the existing seven phases and topic IDs.
 - Map the 22-module source syllabus into the seven phases and a 24-week schedule.
 - Keep topic, module, week, lesson, and activity identities stable.
-- Complete Tamil + English theory, practical examples, exercises, and assessments.
+- Deliver English-only theory, practical examples, exercises, AI responses, feedback, and assessments. No Tamil UI, translation mode, or Tamil lesson content.
 - Exit: every mapped topic has traceable syllabus coverage and content-quality checks.
 
 ### 4 — Learning engine and coding workspace
@@ -56,7 +56,7 @@
 ### 5 — AI Tutor and feedback
 - Centralize OpenAI calls behind server-side services.
 - Validate model configuration at startup or through a safe health check.
-- Add Tamil explanations, concept Q&A, code debugging, hint-first support, and personalized revision.
+- Add English-only concept Q&A, code debugging, hint-first support, and personalized revision.
 - Apply token, request, and cost limits.
 - Exit: provider failures are handled gracefully; no API key reaches the browser; responses are logged without exposing secrets.
 
@@ -102,3 +102,8 @@ A change is complete only when:
 - existing user data and legacy flows remain compatible;
 - security implications are documented;
 - no production deployment or main-branch merge occurred without explicit approval.
+
+
+## Product specification
+
+See [`AI_SKILL_FORGE_2_LEARNING_ROADMAP_SPEC.md`](./AI_SKILL_FORGE_2_LEARNING_ROADMAP_SPEC.md) for the approved English-only product experience, page behavior, learning state machine, API contract, data architecture, security requirements, and acceptance checklist.
