@@ -38,7 +38,7 @@ export default function ForgeDashboard({navigate}) {
     setMobileOpen(false);
     if(id==='roadmap') navigate('roadmap');
     else if(id==='dashboard') navigate('dashboard');
-    else if(id==='practice') navigate('roadmap');
+    else if(id==='practice') navigate('practice');
     else if(id==='tutor'||id==='projects'||id==='assessments'||id==='analytics'||id==='private') navigate(id);
   };
   const sidebar=<>
