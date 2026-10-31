@@ -78,3 +78,9 @@ main,section,article{min-width:0;overflow-wrap:anywhere}
 .roadmap-v2 main pre,.roadmap-v2 main code{color:#dbeafe}
 .roadmap-v2 main button:focus-visible,.roadmap-v2 aside button:focus-visible{outline:2px solid #67e8f9;outline-offset:2px}
 @media(max-width:1023px){.roadmap-v2 aside{box-shadow:20px 0 60px #0009}.roadmap-v2 main{padding-bottom:calc(5rem + env(safe-area-inset-bottom,0px))}}
+
+
+.portal-card-research{background:radial-gradient(circle at 92% 10%,rgba(217,70,239,.18),transparent 38%),linear-gradient(155deg,rgba(47,25,65,.94),rgba(18,16,42,.97))}
+.portal-card-research:hover{border-color:#e879f9}
+.portal-icon-research{color:#f5c4ff;background:linear-gradient(145deg,#71328a,#38214f);border:1px solid #e879f977}
+@media(min-width:1280px){.portal-card{padding:24px}.portal-card .text-3xl{font-size:1.55rem;line-height:1.25}}
