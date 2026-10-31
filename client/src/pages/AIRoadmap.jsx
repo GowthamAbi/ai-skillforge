@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Activity, ArrowLeft, ArrowRight, BookOpen, BrainCircuit, Check, CheckCircle2, ChevronDown, ChevronRight, Circle, Code2, ClipboardCheck, Clock3, FolderOpen, Lightbulb, ListChecks, PanelLeftClose, RotateCcw, Target } from 'lucide-react';
+import { Activity, ArrowLeft, ArrowRight, BookOpen, BrainCircuit, Check, CheckCircle2, ChevronDown, ChevronRight, Circle, Code2, ClipboardCheck, Clock3, FolderOpen, Lightbulb, ListChecks, LockKeyhole, PanelLeftClose, RotateCcw, Target } from 'lucide-react';
 import { api } from '../api/api';
 import { AI_PHASES, flattenTopics } from '../data/aiRoadmap';
 import { PYTHON_FOUNDATION_LESSON } from '../data/lessons/pythonFoundation';
@@ -184,6 +184,19 @@ export default function AIRoadmap() {
     return [phase.id, {total:topics.length,done,percent:pct(done,topics.length)}];
   })), [allTopics, progress]);
   const groupTopics = groupOpen ? allTopics.filter(t=>t.groupId===groupOpen) : [];
+  const topicIndex = item => allTopics.findIndex(entry => entry.id === item?.id);
+  const isTopicUnlocked = item => {
+    const index = topicIndex(item);
+    if (index <= 0) return index === 0;
+    return Boolean(getTopicRecord(progress, allTopics[index - 1].id).completed);
+  };
+  const topicState = item => {
+    const record = getTopicRecord(progress, item.id);
+    if (record.completed) return 'Completed';
+    if (!isTopicUnlocked(item)) return 'Locked';
+    if (record.completedStages?.length || record.lastOpenedAt || record.codeDraft) return 'In progress';
+    return 'Available';
+  };
   const stageToggle = async (stageId) => {
     if (!topic) return;
     const previous = topicRecord.completedStages || [];
@@ -252,7 +265,7 @@ export default function AIRoadmap() {
             <button onClick={()=>{setGroupOpen(old=>old===group.id?'':group.id);setSectionOpen(group.sections[0]?.title||'');setActiveView('dashboard')}} className={`flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-xs font-semibold ${groupOpen===group.id?'bg-violet-500/20 text-violet-100':'text-slate-300 hover:bg-white/5'}`}><FolderOpen size={14} className="shrink-0"/><span className="flex-1">{group.title}</span>{groupOpen===group.id?<ChevronDown size={13}/>:<ChevronRight size={13}/>}</button>
             {groupOpen===group.id&&<div className="ml-3 border-l border-white/15 pl-2">{group.sections.map(section=><div key={section.title}>
               <button onClick={()=>{setSectionOpen(old=>old===section.title?'':section.title);setActiveView('dashboard')}} className="flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-left text-[11px] font-bold text-slate-300 hover:bg-white/5"><ChevronRight size={11}/><span className="flex-1">{section.title}</span></button>
-              {sectionOpen===section.title&&<div className="space-y-0.5 pb-1">{section.topics.map((title,index)=>{const item=allTopics.find(t=>t.phaseId===phase.id&&t.groupId===group.id&&t.sectionTitle===section.title&&t.title===title);const isDone=item&&getTopicRecord(progress,item.id).completed;return <button key={title} onClick={()=>item&&chooseTopic(item)} className={`flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left text-[11px] leading-4 ${selectedId===item?.id&&activeView==='lesson'?'bg-violet-500/25 text-white':'text-slate-400 hover:bg-white/5 hover:text-white'}`}>{isDone?<CheckCircle2 size={12} className="mt-0.5 shrink-0 text-emerald-300"/>:<Circle size={12} className="mt-0.5 shrink-0 opacity-60"/>}<span>{index+1}. {title}</span></button>})}</div>}
+              {sectionOpen===section.title&&<div className="space-y-0.5 pb-1">{section.topics.map((title,index)=>{const item=allTopics.find(t=>t.phaseId===phase.id&&t.groupId===group.id&&t.sectionTitle===section.title&&t.title===title);const isDone=item&&getTopicRecord(progress,item.id).completed;const unlocked=item&&isTopicUnlocked(item);const state=item?topicState(item):'Locked';return <button key={title} type="button" disabled={!unlocked} aria-label={`${title}: ${state}`} title={!unlocked?'Complete the previous topic to unlock this lesson':state} onClick={()=>item&&chooseTopic(item)} className={`flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left text-[11px] leading-4 transition ${selectedId===item?.id&&activeView==='lesson'?'bg-violet-500/25 text-white':unlocked?'text-slate-300 hover:bg-white/5 hover:text-white':'cursor-not-allowed text-slate-600 opacity-60'}`}>{isDone?<CheckCircle2 size={12} className="mt-0.5 shrink-0 text-emerald-300"/>:unlocked?<Circle size={12} className="mt-0.5 shrink-0 text-cyan-300"/>:<LockKeyhole size={12} className="mt-0.5 shrink-0"/>}<span className="min-w-0 flex-1">{index+1}. {title}</span><span className="shrink-0 text-[9px]">{state}</span></button>})}</div>}
             </div>)}</div>}
           </div>)}</div>}
         </div>)}
