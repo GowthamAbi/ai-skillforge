@@ -16,6 +16,54 @@ export const AI_PHASES = [
       {title:'Data Handling',topics:['NumPy arrays and vectorization','Pandas Series and DataFrames','Missing values, duplicates, outliers','Data cleaning and transformation','Matplotlib and Seaborn visualizations']},
       {title:'Developer Tools',topics:['SQL: SELECT, WHERE, GROUP BY, JOIN','Git, GitHub, branches, commits','Linux terminal basics','APIs, JSON, HTTP fundamentals','Debugging, testing and readable code']}
     ]},
+    {id:'dataprep',title:'Data Cleaning & Data Processing',duration:'12 hours',sections:[
+      {title:'Pandas Data Inspection & EDA',topics:[
+        'Data preparation workflow: raw data, validation, cleaning, transformation, and analysis',
+        'Load CSV and Excel datasets with Pandas read_csv() and read_excel()',
+        'Inspect dataset structure with head(), tail(), shape, columns, dtypes, and info()',
+        'Generate descriptive statistics with describe() and value_counts()',
+        'Identify numerical, categorical, text, and date-time columns',
+        'Explore distributions, relationships, correlations, and data quality with EDA'
+      ]},
+      {title:'Data Cleaning Fundamentals',topics:[
+        'Identify missing values with isna(), notna(), and isnull()',
+        'Analyze missing-value patterns and decide when to drop or retain records',
+        'Handle missing numerical values using mean, median, and domain-based values',
+        'Handle categorical missing values using mode and an Unknown category',
+        'Use forward fill, backward fill, and interpolation for suitable ordered data',
+        'Detect and remove duplicate rows with duplicated() and drop_duplicates()',
+        'Fix inconsistent text using strip(), case normalization, and replace()',
+        'Convert incorrect data types with astype(), to_numeric(), and to_datetime()',
+        'Validate dates, numeric ranges, categories, and business rules',
+        'Detect outliers using IQR, box plots, and Z-scores',
+        'Choose whether to investigate, cap, transform, or retain outliers',
+        'Create a reusable data-cleaning checklist and document every change'
+      ]},
+      {title:'Data Processing & Transformation',topics:[
+        'Select, filter, sort, and slice rows and columns using loc and iloc',
+        'Apply conditions, query(), map(), replace(), and vectorized operations',
+        'Combine datasets with concat(), merge(), and join()',
+        'Understand inner, left, right, and outer joins using real examples',
+        'Group data with groupby() and calculate sum, mean, count, min, and max',
+        'Create summary reports with pivot_table() and crosstab()',
+        'Process date-time columns and derive day, month, week, and shift features',
+        'Create practical features from raw columns using feature engineering',
+        'Encode categorical features using one-hot and ordinal encoding',
+        'Scale numerical features using standardization and MinMax scaling',
+        'Understand RobustScaler and when scaling is useful',
+        'Separate features and target; split train, validation, and test data safely',
+        'Prevent data leakage by fitting preprocessing only on training data',
+        'Build repeatable preprocessing workflows with Scikit-learn pipelines',
+        'Export processed datasets and verify schema, row counts, and data types'
+      ]},
+      {title:'Practical Data Preparation Projects',topics:[
+        'Clean a production dataset: missing values, duplicates, invalid quantities, and inconsistent dates',
+        'Process machine breakdown records and calculate downtime by machine and shift',
+        'Analyze elastic quality records and calculate rejection rate by product and batch',
+        'Build a complete Pandas preprocessing notebook and compare raw versus cleaned data',
+        'Prepare a leakage-safe feature matrix for a machine-learning model'
+      ]}
+    ]},
     {id:'p1project',title:'Phase 1 Project',sections:[{title:'Elastic Production Data Analysis',topics:['Analyze daily production quantity with Python','Analyze machine breakdowns and downtime','Calculate rejection rate and quality trends','Measure delivery performance and present a summary']} ]}
   ]},
   {id:'p2',title:'Phase 2 — Machine Learning',duration:'6–8 weeks',description:'Prepare data, build supervised and unsupervised models, evaluate and improve them.',groups:[
