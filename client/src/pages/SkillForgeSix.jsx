@@ -51,7 +51,8 @@ function Card({children,className=''}) { return <section className={'rounded-2xl
 function Metric({icon:Icon,value,label,tone='text-cyan-300 bg-cyan-500/10'}) { return <Card className="flex items-center gap-3"><span className={'grid h-12 w-12 shrink-0 place-items-center rounded-xl '+tone}><Icon size={23}/></span><div><div className="text-2xl font-black">{value}</div><div className="text-xs text-slate-400">{label}</div></div></Card>; }
 
 export default function SkillForgeSix({navigateHome=()=>{}}) {
- const [page,setPage]=useState('dashboard'),[mobileOpen,setMobileOpen]=useState(false),[search,setSearch]=useState(''),[moduleOneOpen,setModuleOneOpen]=useState(false);\n const [mlCourseProgress,setMlCourseProgress]=useState(()=>{try{return JSON.parse(localStorage.getItem('ml-practical-course-progress')||'{}')}catch{return {}}});
+ const [page,setPage]=useState('dashboard'),[mobileOpen,setMobileOpen]=useState(false),[search,setSearch]=useState(''),[moduleOneOpen,setModuleOneOpen]=useState(false);
+ const [mlCourseProgress,setMlCourseProgress]=useState(()=>{try{return JSON.parse(localStorage.getItem('ml-practical-course-progress')||'{}')}catch{return {}}});
  const [progress,setProgress]=useState(()=>{try{return JSON.parse(localStorage.getItem('skillforge6-progress')||'{}')}catch{return {}}});
  const [privateMode,setPrivateMode]=useState(()=>localStorage.getItem('skillforge-private-mode')!=='false');
  const [chat,setChat]=useState([]),[prompt,setPrompt]=useState(''),[chatBusy,setChatBusy]=useState(false);
