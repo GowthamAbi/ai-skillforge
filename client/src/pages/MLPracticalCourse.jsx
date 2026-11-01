@@ -47,6 +47,8 @@ const quiz = [
  {q:'Pandas-ல் table போன்ற structure எது?',o:['Series','DataFrame','Tuple','Set'],a:1,why:'DataFrame என்பது rows மற்றும் columns கொண்ட two-dimensional structure.'}
 ];
 
+const cleaningQuiz = [{"q":"Missing values count செய்ய எந்த Pandas syntax சரி?","o":["df.missing()","df.isna().sum()","df.null.count()","df.info.sum()"],"a":1,"why":"isna() missing cells-ஐ True எனக் குறிக்கும்; sum() column-wise count செய்கிறது."},{"q":"Duplicate rows கண்டறிய எந்த method?","o":["df.duplicated()","df.repeat()","df.same()","df.copy()"],"a":0,"why":"duplicated() ஒவ்வொரு row duplicate ஆக உள்ளதா என Boolean result தரும்."},{"q":"Numeric column-ல் missing values-க்கு robust fill option எது?","o":["median","random string","always zero","drop entire dataset"],"a":0,"why":"Median outliers-ன் தாக்கத்தை mean-ஐவிடக் குறைவாக ஏற்கும்; domain context முக்கியம்."},{"q":"IQR என்றால் என்ன?","o":["Q1 + Q3","Q3 - Q1","Mean - Median","Max - Min"],"a":1,"why":"Interquartile Range என்பது third quartile minus first quartile."},{"q":"IQR bounds-க்கு வெளியே உள்ள value-ஐ உடனே delete செய்யலாமா?","o":["ஆம், எப்போதும்","இல்லை; domain context-ல் verify செய்ய வேண்டும்","அதை duplicate என்று கருத வேண்டும்","அதை zero ஆக மாற்ற வேண்டும்"],"a":1,"why":"அது உண்மையான breakdown/exception ஆக இருக்கலாம்; investigation அவசியம்."},{"q":"Actual production negative ஆக இருந்தால் என்ன செய்ய வேண்டும்?","o":["அப்படியே model-க்கு கொடு","Business rule மூலம் invalid record என flag செய்து investigate செய்","எல்லா rows-ஐ நீக்கு","எல்லா values-ஐ double செய்"],"a":1,"why":"Production count negative என்பது பொதுவாக invalid; source system-ஐ verify செய்து handle செய்ய வேண்டும்."}];
+
 function CodeCard({item,onRun,running}) {
  return <div className="overflow-hidden rounded-xl border border-slate-700 bg-[#080f1c]"><div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 px-3 py-3"><b className="text-sm text-slate-100">{item.title}</b><button onClick={()=>onRun(item.code)} disabled={running} className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold disabled:opacity-50"><Play size={13}/> Run in Practice Lab</button></div><p className="px-3 pt-3 text-xs leading-5 text-slate-400">{item.why}</p><pre className="overflow-x-auto p-3 text-xs leading-6 text-emerald-200"><code>{item.code}</code></pre></div>;
 }
@@ -58,7 +60,8 @@ export default function MLPracticalCourse({onRunCode=()=>{},running=false,output
  const [answers,setAnswers]=useState({});
  const [submitted,setSubmitted]=useState(false);
  const [exerciseDone,setExerciseDone]=useState([]);
- const score=quiz.filter((q,i)=>answers[i]===String(q.a)).length;
+ const activeQuiz=activeModule===2?cleaningQuiz:quiz;
+ const score=activeQuiz.filter((q,i)=>answers[i]===String(q.a)).length;
  const run=(code)=>{setSelectedCode(code);onRunCode(code);};
  const items=activeModule===0?snippets:activeModule===1?pandasSnippets:activeModule===2?dataCleaningSnippets:[];
  return <div className="w-full min-w-0 max-w-full space-y-5 overflow-x-hidden">
