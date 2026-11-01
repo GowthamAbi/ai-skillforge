@@ -16,7 +16,7 @@ export default function ResearchLabModule({navigate}) {
       <div className="mt-auto rounded-xl border border-slate-800 bg-[#101a2b] p-3"><div className="text-sm font-bold">Research workspace</div><div className="mt-1 text-xs text-slate-400">Experiment · Evaluate · Discover</div></div>
     </aside>
     <main className="min-w-0 lg:pl-[250px]">
-      <header className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-800 bg-[#070c16]/95 px-4 py-3 backdrop-blur sm:px-7"><div className="flex items-center gap-3"><FlaskConical className="text-fuchsia-300"/><div><div className="text-sm font-extrabold">AI Research Lab <span className="text-fuchsia-300">06</span></div><div className="text-[11px] text-slate-400">Research, experiments and discovery</div></div></div><button onClick={()=>navigate('dashboard')} className="flex items-center gap-2 rounded-xl border border-slate-700 bg-[#111b2b] px-3 py-2 text-xs font-bold"><ArrowLeft size={14}/> Dashboard</button></header>
+      <header className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-800 bg-[#070c16]/95 px-4 py-3 backdrop-blur sm:px-7"><div className="flex items-center gap-3"><FlaskConical className="text-fuchsia-300"/><div><div className="text-sm font-extrabold">AI Research Lab <span className="text-fuchsia-300">05</span></div><div className="text-[11px] text-slate-400">Research, experiments and discovery</div></div></div><button onClick={()=>navigate('dashboard')} className="flex items-center gap-2 rounded-xl border border-slate-700 bg-[#111b2b] px-3 py-2 text-xs font-bold"><ArrowLeft size={14}/> Dashboard</button></header>
       <div className="mx-auto max-w-[1500px] p-2 sm:p-5"><AIResearchLab/></div>
     </main>
   </div>;

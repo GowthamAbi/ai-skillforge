@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, ArrowRight, BookOpen, BrainCircuit, GraduationCap, Languages, FlaskConical, Sparkles, Zap } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, BrainCircuit, GraduationCap, Languages, Sparkles, Zap } from 'lucide-react';
 import LegacyApp from './LegacyApp';
 import EngineerPath from './pages/EngineerPath';
 import EnglishSpeaking from './pages/EnglishSpeaking';
@@ -69,23 +69,14 @@ function Landing({ navigate, t }) {
             <span className="mt-3 block max-w-sm text-sm leading-7 text-slate-400">{t('home.roadmap.description')}</span>
             <span className="mt-9 flex items-center justify-between border-t border-white/10 pt-5 text-sm font-bold text-violet-200">{t('home.roadmap.action')} <ArrowRight className="transition-transform group-hover:translate-x-1" size={20}/></span>
           </button>
-          <button type="button" onClick={() => navigate('research')} className="portal-card portal-card-research group text-left">
+          <button type="button" onClick={() => navigate('skillforge6')} className="portal-card portal-card-new group text-left">
             <span className="portal-card-shine" aria-hidden="true" />
-            <span className="absolute right-6 top-6 inline-flex items-center gap-1 rounded-full bg-fuchsia-500/20 px-3 py-1.5 text-[11px] font-bold text-fuchsia-200"><Sparkles size={12}/> NEW</span>
-            <span className="portal-icon portal-icon-research"><FlaskConical size={38} strokeWidth={1.65}/></span>
-            <span className="mt-7 block text-xs font-bold tracking-[.22em] text-fuchsia-300">{t('home.research.eyebrow')}</span>
-            <span className="mt-3 block text-3xl font-bold">{t('home.research.title')}</span>
-            <span className="mt-3 block max-w-sm text-sm leading-7 text-slate-400">{t('home.research.description')}</span>
-            <span className="mt-9 flex items-center justify-between border-t border-white/10 pt-5 text-sm font-bold text-fuchsia-200">{t('home.research.action')} <ArrowRight className="transition-transform group-hover:translate-x-1" size={20}/></span>
-          </button>
-          <button type="button" onClick={() => navigate('research6')} className="portal-card portal-card-research group text-left">
-            <span className="portal-card-shine" aria-hidden="true" />
-            <span className="absolute right-6 top-6 inline-flex items-center gap-1 rounded-full bg-fuchsia-500/20 px-3 py-1.5 text-[11px] font-bold text-fuchsia-200"><Sparkles size={12}/> NEW</span>
-            <span className="portal-icon portal-icon-research"><FlaskConical size={38} strokeWidth={1.65}/></span>
-            <span className="mt-7 block text-xs font-bold tracking-[.22em] text-fuchsia-300">{t('home.research.eyebrow')}</span>
-            <span className="mt-3 block text-3xl font-bold">{t('home.research.title')}</span>
-            <span className="mt-3 block max-w-sm text-sm leading-7 text-slate-400">{t('home.research.description')}</span>
-            <span className="mt-9 flex items-center justify-between border-t border-white/10 pt-5 text-sm font-bold text-fuchsia-200">{t('home.research.action')} <ArrowRight className="transition-transform group-hover:translate-x-1" size={20}/></span>
+            <span className="absolute right-6 top-6 inline-flex items-center gap-1 rounded-full bg-cyan-500/20 px-3 py-1.5 text-[11px] font-bold text-cyan-200"><Sparkles size={12}/> NEW</span>
+            <span className="portal-icon portal-icon-violet"><BrainCircuit size={38} strokeWidth={1.65}/></span>
+            <span className="mt-7 block text-xs font-bold tracking-[.22em] text-cyan-300">05 · AI LEARNING</span>
+            <span className="mt-3 block text-3xl font-bold">AI Learning</span>
+            <span className="mt-3 block max-w-sm text-sm leading-7 text-slate-400">Learn AI, Machine Learning, Deep Learning, NLP and Generative AI with structured lessons, practice, projects and assessments.</span>
+            <span className="mt-9 flex items-center justify-between border-t border-white/10 pt-5 text-sm font-bold text-cyan-200">Start AI Learning <ArrowRight className="transition-transform group-hover:translate-x-1" size={20}/></span>
           </button>
         </div>
         <footer className="mt-8 flex items-center justify-center gap-2 text-center text-xs text-slate-500 sm:mt-12 sm:text-sm"><GraduationCap className="shrink-0" size={17}/> {t('home.footer')}</footer>
