@@ -59,7 +59,8 @@ export default function SkillForgeSix({navigateHome=()=>{}}) {
  const [code,setCode]=useState(initialCode),[output,setOutput]=useState(''),[running,setRunning]=useState(false);
  const [filter,setFilter]=useState('All'),[answers,setAnswers]=useState({}),[qIndex,setQIndex]=useState(0),[checked,setChecked]=useState(false);
  const [notice,setNotice]=useState('');
- useEffect(()=>{localStorage.setItem('skillforge6-progress',JSON.stringify(progress));},[progress]);\n useEffect(()=>{localStorage.setItem('ml-practical-course-progress',JSON.stringify(mlCourseProgress));},[mlCourseProgress]);
+ useEffect(()=>{localStorage.setItem('skillforge6-progress',JSON.stringify(progress));},[progress]);
+ useEffect(()=>{localStorage.setItem('ml-practical-course-progress',JSON.stringify(mlCourseProgress));},[mlCourseProgress]);
  const done=Object.values(progress).filter(Boolean).length;
  const percent=Math.round(done/curriculum.length*100);
  const filteredModules=curriculum.filter((m,i)=>(m[0]+' '+m[2]).toLowerCase().includes(search.toLowerCase()));
